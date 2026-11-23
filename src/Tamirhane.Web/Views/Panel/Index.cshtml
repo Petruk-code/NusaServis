@@ -1,0 +1,133 @@
+@using Tamirhane.Application.Dashboard
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@model DashboardView
+@{
+    ViewData["Title"] = T["nav.panel"];
+    var turkey = TimeSpan.FromHours(3);
+    var today = Model.Now.ToOffset(turkey);
+    var counts = Model.Counts;
+    // Günün sayıları: panoya asılı etiketler. Her biri iş emri listesini o süzgeçle açar.
+    var tags = new (string Label, int Count, WorkOrderFilter Filter, string Hint, bool Warn)[]
+    {
+        (T["panel.awaiting"], counts.AwaitingApproval, WorkOrderFilter.AwaitingApproval, T["panel.awaiting_hint"], false),
+        (T["panel.in_repair"], counts.InRepair, WorkOrderFilter.InRepair, T["panel.in_repair_hint"], false),
+        (T["panel.ready"], counts.ReadyForPickup, WorkOrderFilter.Ready, T["panel.ready_hint"], false),
+        (T["panel.overdue"], counts.Overdue, WorkOrderFilter.Overdue, T["panel.overdue_hint"], counts.Overdue > 0),
+    };
+    string Waiting(WorkOrderRow row)
+    {
+        var days = (today.Date - row.CreatedAt.ToOffset(turkey).Date).Days;
+        return days == 0 ? T["common.today"] : T["common.days", days];
+    }
+}
+
+<div class="page-head">
+    <div>
+        <h1>@T["panel.title"]</h1>
+        <p>@today.ToString("dddd, d MMMM")</p>
+    </div>
+</div>
+
+<ul class="count-tags" aria-label="@T["panel.counts"]">
+    @foreach (var tag in tags)
+    {
+        <li>
+            <a class="count-tag@(tag.Warn ? " is-warn" : "")" asp-controller="WorkOrders" asp-action="Index" asp-route-filter="@tag.Filter" title="@tag.Hint">
+                <strong>@tag.Count</strong>
+                <span>@tag.Label</span>
+            </a>
+        </li>
+    }
+</ul>
+
+@if (!Model.HasOpenWork)
+{
+    <section class="panel empty">
+        <partial name="_EmptyHook" />
+        <div>
+            <h2>@T["panel.empty_title"]</h2>
+            <p>@H["panel.empty_text_html"]</p>
+            <p class="muted">@H["panel.empty_search_html"]</p>
+        </div>
+    </section>
+}
+
+<div class="dash-layout">
+    @if (Model.HasOpenWork)
+    {
+        <section class="panel" aria-labelledby="oldest-heading">
+            <div class="panel-head">
+                <h2 id="oldest-heading">@T["panel.oldest"]</h2>
+                <a asp-controller="WorkOrders" asp-action="Index">@T["panel.all_open", counts.Open]</a>
+            </div>
+            <div class="table-wrap">
+                <table class="data-table work-list">
+                    <thead>
+                        <tr>
+                            <th scope="col">@T["table.number"]</th>
+                            <th scope="col">@T["table.device"]</th>
+                            <th scope="col">@T["table.customer"]</th>
+                            <th scope="col">@T["table.status"]</th>
+                            <th scope="col" class="num">@T["table.waiting"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Oldest)
+                        {
+                            var late = row.CreatedAt < Model.Now.AddDays(-ListWorkOrders.OverdueDays);
+                            <tr>
+                                <td class="c-no"><a class="work-no" asp-controller="WorkOrders" asp-action="Details" asp-route-id="@row.Id">@row.Number</a></td>
+                                <td class="c-device">@row.Brand @row.Model</td>
+                                <td class="c-customer">@row.CustomerName</td>
+                                <td class="c-status"><span class="stamp stamp-sm@(late ? " stamp-warn" : row.Status == WorkOrderStatus.Ready ? " stamp-ok" : "")">@T.Of(row.Status)</span></td>
+                                <td class="c-wait num@(late ? " warn-text" : "")">@Waiting(row)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    <div class="dash-side">
+        @if (Model.Revenue is { } revenue)
+        {
+            @* Ciro sadece sahibe; teknisyen için hesaplanmaz bile. *@
+            <section class="panel" aria-labelledby="revenue-heading">
+                <div class="panel-head"><h2 id="revenue-heading">@T["panel.revenue"]</h2></div>
+                <div class="panel-body">
+                    <p class="dash-money">@revenue.ThisMonth.ToString("C")</p>
+                    <p class="muted">@T["panel.revenue_note", today.ToString("MMMM"), revenue.LastMonth.ToString("C")]</p>
+                </div>
+            </section>
+        }
+
+        <section class="panel" aria-labelledby="stock-heading">
+            <div class="panel-head">
+                <h2 id="stock-heading">@T["panel.low_stock"]</h2>
+                @if (Model.LowStock.Count > 0)
+                {
+                    <a asp-controller="Inventory" asp-action="Index" asp-route-low="true">@T["common.all"]</a>
+                }
+            </div>
+            @if (Model.LowStock.Count == 0)
+            {
+                <p class="panel-body muted">@T["panel.no_low_stock"]</p>
+            }
+            else
+            {
+                <ul class="dash-stock">
+                    @foreach (var item in Model.LowStock)
+                    {
+                        <li>
+                            <a asp-controller="Inventory" asp-action="Part" asp-route-id="@item.PartId">@item.Name</a>
+                            <span class="@(item.Quantity == 0 ? "warn-text" : "muted")">@T["panel.stock_quantity", item.Quantity] <small>@T["panel.stock_critical", item.CriticalLevel]</small></span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
+</div>

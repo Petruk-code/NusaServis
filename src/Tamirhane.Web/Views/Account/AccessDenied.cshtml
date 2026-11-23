@@ -1,0 +1,13 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = T["account.denied.title"];
+}
+
+<section class="panel empty">
+    <partial name="_EmptyHook" />
+    <div>
+        <h1>@T["account.denied.heading"]</h1>
+        <p>@T["account.denied.text"]</p>
+        <a class="btn" asp-controller="Panel" asp-action="Index">@T["common.back_to_panel"]</a>
+    </div>
+</section>

@@ -1,0 +1,18 @@
+@model EmailInput
+@{
+    ViewData["Title"] = T["account.resend.title"];
+}
+
+<div class="narrow">
+    <h1>@T["account.resend.title"]</h1>
+    <p class="muted">@T["account.resend.text"]</p>
+
+    <form asp-action="ResendConfirmation" method="post" novalidate>
+        <div class="field">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" autocomplete="email" />
+            <span asp-validation-for="Email"></span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">@T["account.resend.submit"]</button>
+    </form>
+</div>

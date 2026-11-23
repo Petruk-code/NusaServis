@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Tamirhane</title>
+    @* Uygulama ve hesap sayfaları arama sonuçlarına girmez; aranan sayfa tanıtım (#42). *@
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @* htmx: eval kapalı ve kendi stilini eklemez (CSP'de unsafe-eval ve satır içi stil gerekmesin). *@
+    <meta name="htmx-config" content='{"allowEval":false,"includeIndicatorStyles":false,"historyCacheSize":0}' />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <a class="skip-link" href="#main">@T["layout.skip"]</a>
+    @{
+        var signedIn = User.Identity?.IsAuthenticated == true;
+        var isOwner = User.IsInRole("Owner");
+        // Oturumdaki görünen ad (personel kaydından); yoksa e-posta.
+        var displayName = User.FindFirst("tamirhane:name")?.Value ?? User.Identity?.Name;
+        // Demo atölye (#36): şerit görünür; demo hesabının .invalid adresi gösterilmez.
+        var demo = User.HasClaim("tamirhane:demo", "true");
+        var controller = ViewContext.RouteData.Values["controller"] as string;
+        var action = ViewContext.RouteData.Values["action"] as string;
+        string? Current(string name) => controller == name ? "page" : null;
+        // Cihaz kabul ve iş emirleri aynı controller'da: kabul formu ayrı işaretlenir.
+        var onIntake = controller == "WorkOrders" && action == "New";
+    }
+
+    @if (signedIn)
+    {
+        <div class="shell">
+            <aside class="side pegboard" aria-label="@T["layout.side"]">
+                <div class="side-head">
+                    <a class="brand" asp-controller="Panel" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+                    <button type="button" class="side-btn side-toggle" aria-expanded="false" aria-controls="side-nav">
+                        <svg class="icon"><use href="/img/icons.svg#i-menu" /></svg>@T["layout.menu"]
+                    </button>
+                </div>
+                <nav id="side-nav" aria-label="@T["layout.pages"]">
+                    <ul class="nav">
+                        <li><a asp-controller="Panel" asp-action="Index" aria-current="@Current("Panel")"><svg class="icon"><use href="/img/icons.svg#i-home" /></svg>@T["nav.panel"]</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="Index" aria-current="@(controller == "WorkOrders" && !onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-list" /></svg>@T["nav.work_orders"]</a></li>
+                        <li><a asp-controller="WorkOrders" asp-action="New" aria-current="@(onIntake ? "page" : null)"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["nav.intake"]</a></li>
+                        <li><a asp-controller="Inventory" asp-action="Index" aria-current="@Current("Inventory")"><svg class="icon"><use href="/img/icons.svg#i-box" /></svg>@T["nav.inventory"]</a></li>
+                        <li><a asp-controller="Connections" asp-action="Index" aria-current="@Current("Connections")"><svg class="icon"><use href="/img/icons.svg#i-chat" /></svg>@T["nav.connections"]</a></li>
+                        @if (isOwner)
+                        {
+                            <li><a asp-controller="Staff" asp-action="Index" aria-current="@Current("Staff")"><svg class="icon"><use href="/img/icons.svg#i-users" /></svg>@T["nav.staff"]</a></li>
+                            <li><a asp-controller="Settings" asp-action="Index" aria-current="@Current("Settings")"><svg class="icon"><use href="/img/icons.svg#i-gear" /></svg>@T["nav.settings"]</a></li>
+                        }
+                    </ul>
+                </nav>
+                <div class="side-foot">
+                    <partial name="_SideTools" />
+                    <div class="side-who">
+                        <strong>@displayName</strong>@(demo ? T["demo.account"] : User.Identity?.Name)
+                        <div class="side-actions">
+                            <button type="button" id="theme-toggle" class="side-btn" aria-label="@T["layout.dark_theme"]" title="@T["layout.dark_theme"]"
+                                    data-dark="@T["layout.dark_theme"]" data-light="@T["layout.light_theme"]"><svg class="icon"><use href="/img/icons.svg#i-moon" /></svg></button>
+                            <partial name="_LanguageSwitch" model="@("side-btn")" />
+                            @* Çıkış POST'tur: bir resim etiketi ya da link ile kullanıcının oturumu dışarıdan kapatılamaz. *@
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="side-btn"><svg class="icon"><use href="/img/icons.svg#i-logout" /></svg>@T["layout.sign_out"]</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="main">
+                <header class="top">
+                    @* Arama her ekranda; "/" aramaya, "N" kabule götürür (site.js). *@
+                    <form class="search" role="search" method="get" asp-controller="WorkOrders" asp-action="Index">
+                        <svg class="icon"><use href="/img/icons.svg#i-search" /></svg>
+                        <label for="search" class="visually-hidden">@T["layout.search_label"]</label>
+                        <input id="search" name="q" type="search" placeholder="@T["layout.search_placeholder"]" autocomplete="off"
+                               value="@(controller == "WorkOrders" && action == "Index" ? Context.Request.Query["q"].ToString() : "")"
+                               aria-keyshortcuts="/" />
+                        <kbd aria-hidden="true">/</kbd>
+                    </form>
+                    <div class="top-end">
+                        @await Component.InvokeAsync("BranchSwitcher")
+                        <a id="intake-link" class="btn btn-primary" asp-controller="WorkOrders" asp-action="New" aria-keyshortcuts="N">
+                            <svg class="icon"><use href="/img/icons.svg#i-plus" /></svg>@T["layout.intake_button"]
+                        </a>
+                    </div>
+                </header>
+                <main id="main" class="content">
+                    @if (demo)
+                    {
+                        <div class="demo-strip" role="note">
+                            <p>@T["demo.strip", (int)Tamirhane.Domain.Shops.Shop.DemoLifetime.TotalHours]</p>
+                            <form asp-controller="Demo" asp-action="Leave" method="post">
+                                <button type="submit" class="btn btn-primary">@T["demo.own_shop"]</button>
+                            </form>
+                        </div>
+                    }
+                    @RenderBody()
+                </main>
+                <partial name="_SiteFooter" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <header class="plain-top">
+            <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+            <partial name="_LanguageSwitch" model="@("btn")" />
+            <nav class="account-links" aria-label="@T["layout.account"]">
+                <a class="btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
+            </nav>
+        </header>
+        <main id="main" class="content">
+            @RenderBody()
+        </main>
+        <partial name="_SiteFooter" />
+    }
+
+    <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/trusted-types.js" asp-append-version="true"></script>
+    <script src="~/js/vendor/htmx.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/motion.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

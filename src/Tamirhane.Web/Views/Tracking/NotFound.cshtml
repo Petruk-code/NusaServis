@@ -1,0 +1,15 @@
+@{
+    Layout = "_TrackingLayout";
+    // Atölye bilinmiyor: dil ?lang'dan, yoksa tarayıcının dilinden.
+    if (Tamirhane.Web.Localization.AppCultures.From(Context.Request.Query["lang"]) is { } culture)
+    {
+        ViewData["Culture"] = culture;
+        Tamirhane.Web.Localization.AppCultures.Use(culture);
+    }
+    ViewData["Title"] = T["tracking.missing_title"];
+}
+
+<main id="main" class="track-body track-missing">
+    <h1>@T["tracking.missing_heading"]</h1>
+    <p>@T["tracking.missing_text"]</p>
+</main>

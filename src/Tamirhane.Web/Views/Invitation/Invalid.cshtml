@@ -1,0 +1,9 @@
+@{
+    ViewData["Title"] = T["invitation.invalid_title"];
+}
+
+<div class="narrow">
+    <h1>@T["invitation.invalid_title"]</h1>
+    <p>@T["invitation.invalid_text"]</p>
+    <p>@H["invitation.invalid_login_html", Url.Action("Login", "Account")!]</p>
+</div>

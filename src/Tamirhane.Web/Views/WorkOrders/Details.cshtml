@@ -1,0 +1,22 @@
+@model Tamirhane.Application.WorkOrders.WorkOrderView
+@{
+    ViewData["Title"] = Model.Number;
+    // Sayfa yenilenerek gelindiyse (JavaScript yok ya da kabulden yönlendirme) bilgiler TempData'dan.
+    ViewData["Created"] = TempData["Created"] is true;
+    ViewData["Pressed"] = TempData["Pressed"] is true || TempData.Peek("Created") is true;
+    ViewData["Error"] = TempData["Error"] as string;
+    ViewData["Success"] = TempData["Success"] as string;
+}
+
+<div class="page-head">
+    <div>
+        <h1>@Model.Number</h1>
+        <p>@Model.Brand @Model.Model, @Model.CustomerName</p>
+    </div>
+    <div class="inline-form">
+        <a class="btn" asp-action="Receipt" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-printer" /></svg>@T["workorder.print_receipt"]</a>
+        <a class="btn" asp-action="Label" asp-route-id="@Model.Id"><svg class="icon"><use href="/img/icons.svg#i-tag" /></svg>@T["workorder.print_label"]</a>
+    </div>
+</div>
+
+<partial name="_WorkOrderBody" model="Model" />

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tamirhane.Application\Tamirhane.Application.csproj" />
+    <ProjectReference Include="..\Tamirhane.Infrastructure\Tamirhane.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Arayüz metinleri derlemeye gömülür (#35): yayında dosya kopyalamaya bağlı kalmaz. -->
+    <EmbeddedResource Include="Resources\*.json" LogicalName="Tamirhane.Web.Resources.%(Filename)%(Extension)" />
+    <Content Remove="Resources\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Yerel geliştirme bağlantısı yayın paketine girmez. -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.1" />
+    <PackageReference Include="OpenIddict.AspNetCore" Version="7.8.0" />
+  </ItemGroup>
+
+</Project>

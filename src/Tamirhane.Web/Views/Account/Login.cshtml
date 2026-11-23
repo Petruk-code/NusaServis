@@ -1,0 +1,47 @@
+@model LoginInput
+@{
+    ViewData["Title"] = T["account.login.title"];
+}
+
+<div class="narrow">
+    <h1>@T["account.login.title"]</h1>
+
+    @if (ViewData["EmailNotConfirmed"] is true)
+    {
+        <div class="notice notice-error" role="alert">
+            @H["account.login.not_confirmed_html", Url.Action("ResendConfirmation")!]
+        </div>
+    }
+
+    <form asp-action="Login" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+        <input asp-for="ReturnUrl" type="hidden" />
+
+        <div class="field">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" type="email" autocomplete="username" />
+            <span asp-validation-for="Email"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" autocomplete="current-password" />
+            <span asp-validation-for="Password"></span>
+        </div>
+        <div class="check">
+            <input asp-for="RememberMe" />
+            <label asp-for="RememberMe"></label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">@T["account.login.title"]</button>
+    </form>
+
+    <p>@T["account.login.no_account"] <a asp-action="Register">@T["account.register.title"]</a></p>
+    <p><a asp-action="ForgotPassword">@T["account.forgot.title"]</a></p>
+    <p><a asp-action="ResendConfirmation">@T["account.login.no_email"]</a></p>
+
+    @* Hesabı olmayan ziyaretçi örnek verili kendi atölyesinde dener (#36). *@
+    <form asp-controller="Demo" asp-action="Start" method="post" class="demo-offer">
+        <p>@T["demo.login_text"]</p>
+        <button type="submit" class="btn btn-block">@T["demo.try"]</button>
+    </form>
+</div>

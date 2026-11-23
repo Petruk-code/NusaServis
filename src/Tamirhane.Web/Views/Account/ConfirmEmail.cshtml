@@ -1,0 +1,19 @@
+@model bool
+@{
+    ViewData["Title"] = Model ? T["account.confirm.ok_title"] : T["account.confirm.bad_title"];
+}
+
+<div class="narrow">
+    @if (Model)
+    {
+        <h1>@T["account.confirm.ok_title"]</h1>
+        <p>@T["account.confirm.ok_text"]</p>
+        <a asp-action="Login" class="btn btn-primary">@T["account.login.title"]</a>
+    }
+    else
+    {
+        <h1>@T["account.confirm.bad_title"]</h1>
+        <p>@T["account.confirm.bad_text"]</p>
+        <a asp-action="ResendConfirmation" class="btn btn-primary">@T["account.confirm.new_link"]</a>
+    }
+</div>

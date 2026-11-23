@@ -1,0 +1,52 @@
+@using Tamirhane.Web.Models.WorkOrders
+@model WarrantyPage
+@{
+    ViewData["Title"] = $"{T["warranty.title"]}: {Model.Previous.Number}";
+    var previous = Model.Previous;
+    var turkey = TimeSpan.FromHours(3);
+}
+
+<div class="page-head">
+    <div>
+        <h1>@T["warranty.title"]</h1>
+        <p>@previous.Brand @previous.Model, @previous.CustomerName · @T["warranty.previous"] <a asp-action="Details" asp-route-id="@previous.Id">@previous.Number</a></p>
+    </div>
+</div>
+
+<section class="panel narrow">
+    <form method="post" asp-action="Warranty" asp-route-id="@previous.Id" class="panel-body" novalidate>
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+        <p class="muted">
+            @T["warranty.from_previous"]
+            @if (previous.WarrantyUntil is { } until)
+            {
+                @T["workorder.warranty_until", until.ToOffset(turkey).ToString("d MMMM yyyy")]
+            }
+            @T["warranty.linked"]
+        </p>
+        <div class="field">
+            <label asp-for="Input.Complaint"></label>
+            <textarea asp-for="Input.Complaint" rows="3" placeholder="@T["warranty.complaint_example"]"></textarea>
+            <span asp-validation-for="Input.Complaint"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Condition"></label>
+            <textarea asp-for="Input.Condition" rows="2"></textarea>
+            <span asp-validation-for="Input.Condition"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Accessories"></label>
+            <input asp-for="Input.Accessories" />
+            <span asp-validation-for="Input.Accessories"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Input.Passcode"></label>
+            <input asp-for="Input.Passcode" autocomplete="off" />
+            <span asp-validation-for="Input.Passcode"></span>
+        </div>
+        <div class="inline-form">
+            <button type="submit" class="btn btn-primary">@T["warranty.submit"]</button>
+            <a class="btn" asp-action="Details" asp-route-id="@previous.Id">@T["common.cancel"]</a>
+        </div>
+    </form>
+</section>

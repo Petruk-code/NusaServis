@@ -1,0 +1,214 @@
+@using System.Net
+@using Tamirhane.Application.WorkOrders
+@using Tamirhane.Domain.WorkOrders
+@using Tamirhane.Web.Display
+@using Tamirhane.Web.Localization
+@model TrackingView
+@{
+    Layout = "_TrackingLayout";
+    // Atölyenin müşteri dili; müşteri sayfadaki geçişle (?lang) değiştirebilir. Düzen de aynı dili kullanır.
+    var chosen = AppCultures.From(Context.Request.Query["lang"]);
+    var culture = chosen ?? AppCultures.From(Model.Locale) ?? AppCultures.Turkish;
+    ViewData["Culture"] = culture;
+    AppCultures.Use(culture);
+    var lang = chosen?.TwoLetterISOLanguageName; // form ve yönlendirme seçimi korusun
+    var other = culture == AppCultures.English ? AppCultures.Turkish : AppCultures.English;
+    ViewData["Title"] = $"{Model.Brand} {Model.Model}: {T.Of(Model.Status)}";
+    ViewData["Manifest"] = Url.Action("Manifest", new { code = ViewContext.RouteData.Values["code"] });
+    var turkey = TimeSpan.FromHours(3);
+    var lead = Model.Status switch
+    {
+        WorkOrderStatus.Received => T["tracking.lead.received"],
+        WorkOrderStatus.Diagnosing => T["tracking.lead.diagnosing"],
+        WorkOrderStatus.AwaitingApproval => T["tracking.lead.awaiting_approval"],
+        WorkOrderStatus.InRepair => T["tracking.lead.in_repair"],
+        WorkOrderStatus.Ready => T["tracking.lead.ready"],
+        WorkOrderStatus.Declined => T["tracking.lead.declined"],
+        WorkOrderStatus.Delivered => T["tracking.lead.delivered"],
+        WorkOrderStatus.Cancelled => T["tracking.lead.cancelled"],
+        _ => "",
+    };
+    var tone = Model.Status switch
+    {
+        WorkOrderStatus.Ready or WorkOrderStatus.Delivered => " stamp-ok",
+        WorkOrderStatus.Cancelled or WorkOrderStatus.Declined => " stamp-warn",
+        _ => "",
+    };
+    var current = Model.Steps.Count(s => s.At is not null) - 1;
+    var code = ViewContext.RouteData.Values["code"] as string;
+    // Denetleyici anahtar bırakır; metin sayfanın dilinde burada çıkar.
+    var done = TempData["Decision"] is string doneKey ? T[doneKey].Value : null;
+    var failed = (TempData["DecisionError"] ?? ViewData["DecisionError"]) is string failedKey ? T[failedKey].Value : null;
+    string Percent(decimal value) => "%" + value.ToString("0.##");
+    string? Maps(string? address) => address is null ? null
+        : "https://www.google.com/maps/search/?api=1&query=" + WebUtility.UrlEncode($"{Model.ShopName} {address}");
+}
+
+<header class="track-board pegboard">
+    <div class="track-shop">
+        <p>@Model.ShopName<span>@Model.BranchName</span></p>
+        <a class="track-lang" href="@Context.Request.Path?lang=@other.TwoLetterISOLanguageName" lang="@other.TwoLetterISOLanguageName"
+           hreflang="@other.TwoLetterISOLanguageName">@(other == AppCultures.English ? "English" : "Türkçe")</a>
+    </div>
+    <article class="track-tag" aria-labelledby="track-device">
+        <p class="track-no">@T["inventory.work_order", Model.Number]</p>
+        <h1 id="track-device">@Model.Brand @Model.Model</h1>
+        <p class="track-owner">@Model.MaskedCustomerName</p>
+        <p class="track-complaint">@Model.Complaint</p>
+        <span class="stamp is-pressed@(tone)">@T.Of(Model.Status)</span>
+    </article>
+</header>
+
+<main id="main" class="track-body">
+    @if (done is not null)
+    {
+        <div class="notice notice-ok" role="status">@done</div>
+    }
+    @if (failed is not null)
+    {
+        <div class="notice notice-error" role="alert">@failed</div>
+    }
+    <p class="track-lead">@lead</p>
+
+    @if (!Model.IsClosed && Model.PromisedDate is { } promised)
+    {
+        <p class="track-eta">@H["tracking.eta_html", promised.ToString(T["format.day"])]</p>
+    }
+    else if (Model.Status == WorkOrderStatus.Delivered && Model.WarrantyUntil is { } until)
+    {
+        <p class="track-eta">@H["tracking.warranty_html", until.ToOffset(turkey).ToString("d MMMM yyyy")]</p>
+    }
+
+    @if (!Model.IsClosed && ViewData["PushKey"] is string pushKey)
+    {
+        @* Tarayıcı bildirimi desteklenmiyorsa (ör. iPhone'da Ana Ekran'a eklenmemiş Safari) bölüm gizli kalır; tracking.js açar. *@
+        <section class="track-push" data-push data-key="@pushKey" hidden
+                 data-state="@Url.Action("PushState", new { code })" data-subscribe="@Url.Action("Subscribe", new { code })"
+                 data-unsubscribe="@Url.Action("Unsubscribe", new { code })" aria-labelledby="push-heading"
+                 data-msg-active="@T["tracking.push.active"]" data-msg-on="@T["tracking.push.on"]" data-msg-off="@T["tracking.push.off"]"
+                 data-msg-denied="@T["tracking.push.denied"]" data-msg-on-failed="@T["tracking.push.on_failed"]"
+                 data-msg-off-failed="@T["tracking.push.off_failed"]">
+            @Html.AntiForgeryToken()
+            <h2 id="push-heading">@T["tracking.push.title"]</h2>
+            <p data-push-text>@T["tracking.push.text"]</p>
+            <div class="track-actions">
+                <button type="button" class="btn btn-primary" data-push-on>
+                    <svg class="icon"><use href="/img/icons.svg#i-bell" /></svg>@T["tracking.push.subscribe"]
+                </button>
+                <button type="button" class="btn" data-push-off hidden>@T["tracking.push.unsubscribe"]</button>
+            </div>
+            <p class="field-help" data-push-message role="status" aria-live="polite"></p>
+        </section>
+        @* iPhone/iPad'de tarayıcı sekmesinde bildirim yok (Apple'ın kuralı); sayfa ana ekrana eklenince açılır. tracking.js gösterir. *@
+        <section class="track-push" data-push-ios hidden aria-labelledby="push-ios-heading">
+            <h2 id="push-ios-heading">@T["tracking.push.title"]</h2>
+            <p>@T["tracking.push.ios_text"]</p>
+            <ol class="track-ios-steps">
+                <li>@T["tracking.push.ios_step1"]</li>
+                <li>@T["tracking.push.ios_step2"]</li>
+                <li>@T["tracking.push.ios_step3"]</li>
+            </ol>
+        </section>
+    }
+
+    @if (Model.QuoteLines.Count > 0)
+    {
+        var totals = Model.QuoteTotals;
+        <section class="track-quote" aria-labelledby="quote-heading">
+            <h2 id="quote-heading">@T["quote.title"]</h2>
+            <ul class="track-lines">
+                @foreach (var line in Model.QuoteLines)
+                {
+                    <li>
+                        <span>@line.Description
+                            <small>@line.Quantity.ToString("0.##") × @line.UnitPrice.ToString("C")@(line.DiscountRate > 0 ? T["tracking.line_discount", Percent(line.DiscountRate)].Value : ""), @T["quote.vat"] @Percent(line.VatRate)</small>
+                        </span>
+                        <strong>@line.Total.ToString("C")</strong>
+                    </li>
+                }
+            </ul>
+            <dl class="track-totals">
+                @if (totals.Discount > 0)
+                {
+                    <dt>@T["quote.discount"]</dt><dd>−@totals.Discount.ToString("C")</dd>
+                }
+                <dt>@T["tracking.net"]</dt><dd>@totals.Net.ToString("C")</dd>
+                <dt>@T["quote.vat"]</dt><dd>@totals.Vat.ToString("C")</dd>
+                <dt class="track-total">@T["tracking.total"]</dt><dd class="track-total">@totals.Total.ToString("C")</dd>
+            </dl>
+
+            @if (Model.CanDecide)
+            {
+                @* Çift tıklamaya karşı düğmeler gönderimden sonra kilitlenir (tracking.js); asıl koruma sunucuda. *@
+                <form method="post" asp-action="Decide" asp-route-code="@code" asp-route-lang="@lang" class="track-decide" data-once>
+                    <div class="field">
+                        <label for="decided-by">@T["tracking.decided_by"]</label>
+                        <input id="decided-by" name="DecidedBy" value="@ViewData["DecidedBy"]" maxlength="100" autocomplete="name" required aria-describedby="decided-by-help" />
+                        <div id="decided-by-help" class="field-help">@T["tracking.decided_by_help"]</div>
+                    </div>
+                    <div class="track-actions">
+                        <button type="submit" name="Approved" value="true" class="btn btn-primary">@T["tracking.approve"]</button>
+                        <button type="submit" name="Approved" value="false" class="btn">@T["tracking.decline"]</button>
+                    </div>
+                </form>
+            }
+            else if (Model.Decision is { } decision)
+            {
+                var approved = decision.Kind == QuoteDecisionKind.Approved;
+                <p class="track-decided">
+                    <span class="stamp stamp-sm@(approved ? " stamp-ok" : " stamp-warn")">@T[approved ? "quote.approved" : "quote.declined"]</span>
+                    <time datetime="@decision.At.ToString("O")">@decision.At.ToOffset(turkey).ToString("d MMMM HH:mm")</time>
+                </p>
+            }
+        </section>
+    }
+
+    <section aria-labelledby="steps-heading">
+        <h2 id="steps-heading">@T["tracking.steps"]</h2>
+        <ol class="track-steps">
+            @for (var i = 0; i < Model.Steps.Count; i++)
+            {
+                var step = Model.Steps[i];
+                <li class="@(step.At is null ? "is-ahead" : i == current ? "is-current" : "is-done")" aria-current="@(i == current ? "step" : null)">
+                    <span class="track-dot" aria-hidden="true"></span>
+                    <span class="track-step">@T.Of(step.Status)</span>
+                    @if (step.At is { } at)
+                    {
+                        <time datetime="@at.ToString("O")">@at.ToOffset(turkey).ToString("d MMM HH:mm")</time>
+                    }
+                </li>
+            }
+        </ol>
+    </section>
+
+    @if (Model.Notes.Count > 0)
+    {
+        <section aria-labelledby="notes-heading">
+            <h2 id="notes-heading">@T["tracking.notes"]</h2>
+            <ul class="track-notes">
+                @foreach (var note in Model.Notes)
+                {
+                    <li><time datetime="@note.At.ToString("O")">@note.At.ToOffset(turkey).ToString("d MMM HH:mm")</time><p>@note.Text</p></li>
+                }
+            </ul>
+        </section>
+    }
+
+    <section class="track-contact" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">@Model.ShopName</h2>
+        @if (Model.BranchAddress is not null)
+        {
+            <p>@Model.BranchAddress</p>
+        }
+        <div class="track-actions">
+            @if (Model.BranchPhone is { } phone)
+            {
+                <a class="btn btn-primary" href="tel:@phone"><svg class="icon"><use href="/img/icons.svg#i-phone" /></svg>@Labels.Phone(phone)</a>
+            }
+            @if (Maps(Model.BranchAddress) is { } maps)
+            {
+                <a class="btn" href="@maps" rel="noopener noreferrer" target="_blank">@T["tracking.directions"]</a>
+            }
+        </div>
+    </section>
+</main>

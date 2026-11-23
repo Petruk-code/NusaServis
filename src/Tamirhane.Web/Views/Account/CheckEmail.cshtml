@@ -1,0 +1,9 @@
+@{
+    ViewData["Title"] = T["account.check_email.title"];
+}
+
+<div class="narrow">
+    <h1>@T["account.check_email.title"]</h1>
+    <p>@T["account.check_email.text"]</p>
+    <p class="muted">@H["account.check_email.spam_html", Url.Action("ResendConfirmation")!]</p>
+</div>

@@ -1,0 +1,50 @@
+@model RegisterInput
+@{
+    ViewData["Title"] = T["account.register.title"];
+}
+
+<div class="narrow">
+    <h1>@T["account.register.title"]</h1>
+    <p class="muted">@T["account.register.text"]</p>
+
+    <form asp-action="Register" method="post" novalidate>
+        <div asp-validation-summary="ModelOnly" class="notice notice-error" role="alert"></div>
+
+        <div class="field-row">
+            <div class="field">
+                <label asp-for="ShopName"></label>
+                <input asp-for="ShopName" autocomplete="organization" />
+                <span asp-validation-for="ShopName"></span>
+            </div>
+            <div class="field">
+                <label asp-for="OwnerName"></label>
+                <input asp-for="OwnerName" autocomplete="name" />
+                <span asp-validation-for="OwnerName"></span>
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" autocomplete="email" />
+            <span asp-validation-for="Email"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" autocomplete="new-password" aria-describedby="password-help" />
+            <div id="password-help" class="field-help">@T["account.password.help"]</div>
+            <span asp-validation-for="Password"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Locale"></label>
+            <select asp-for="Locale">
+                <option value="tr">Türkçe</option>
+                <option value="en">English</option>
+            </select>
+            <span asp-validation-for="Locale"></span>
+        </div>
+
+        <p class="field-help">@H["account.register.legal_html", Url.Action("Terms", "Home")!, Url.Action("Privacy", "Home")!]</p>
+        <button type="submit" class="btn btn-primary btn-block">@T["account.register.submit"]</button>
+    </form>
+
+    <p>@T["account.register.has_account"] <a asp-action="Login">@T["account.login.title"]</a></p>
+</div>

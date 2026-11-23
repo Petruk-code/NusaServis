@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · Tamirhane")</title>
+    <partial name="_SeoHead" />
+    <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <link rel="preload" href="~/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/theme.js" asp-append-version="true"></script>
+</head>
+<body class="public">
+    @* Tanıtım ve yasal sayfalar: üstte pano şeridi, altta alt bilgi. Uygulamanın kabuğu (yan menü) burada yok. *@
+    <a class="skip-link" href="#main">@T["layout.skip"]</a>
+    <header class="public-top pegboard">
+        <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+        @* Dil seçici logonun yanında; giriş ve kayıt dar ekranda alt satıra iner (hiçbiri ekrandan taşmaz). *@
+        <partial name="_LanguageSwitch" model="@("side-btn")" />
+        <nav class="account-links" aria-label="@T["layout.account"]">
+            <a class="side-btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@T["account.register.title"]</a>
+        </nav>
+    </header>
+    <main id="main">
+        @RenderBody()
+    </main>
+    <partial name="_SiteFooter" />
+    <script src="~/js/vendor/motion.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/motion.js" asp-append-version="true"></script>
+</body>
+</html>

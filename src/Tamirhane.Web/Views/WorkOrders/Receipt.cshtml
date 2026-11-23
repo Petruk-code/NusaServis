@@ -1,0 +1,112 @@
+@using Tamirhane.Web.Display
+@using Tamirhane.Web.Localization
+@model Tamirhane.Application.WorkOrders.ReceiptView
+@{
+    Layout = "_PrintLayout";
+    // Sekme başlığı ve araç çubuğu personelin dilinde; kâğıt müşteriye verilir, atölyenin müşteri dilinde basılır.
+    ViewData["Title"] = T["receipt.title", Model.Number].Value;
+    ViewData["Back"] = Url.Action("Details", new { id = ViewContext.RouteData.Values["id"] });
+    ViewData["Hint"] = T["receipt.hint"].Value;
+    var paper = AppCultures.From(Model.Locale) ?? AppCultures.Turkish;
+    AppCultures.Use(paper);
+    var turkey = TimeSpan.FromHours(3);
+    var id = ViewContext.RouteData.Values["id"];
+}
+
+<article class="sheet receipt" lang="@paper.TwoLetterISOLanguageName" aria-label="@T["receipt.name"]">
+    <header class="receipt-head">
+        <div>
+            <h1>@Model.ShopName</h1>
+            <p>
+                @Model.BranchName
+                @if (Model.BranchAddress is not null)
+                {
+                    <br />@Model.BranchAddress
+                }
+            </p>
+        </div>
+        <div class="receipt-no">
+            <span>@T["receipt.name"]</span>
+            <strong>@Model.Number</strong>
+            <span>@Model.CreatedAt.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</span>
+        </div>
+    </header>
+
+    <div class="receipt-grid">
+        <section>
+            <h2>@T["table.customer"]</h2>
+            <p>
+                <strong>@Model.CustomerName</strong><br />
+                @Labels.Phone(Model.CustomerPhone)
+                @if (Model.CustomerEmail is not null)
+                {
+                    <br />@Model.CustomerEmail
+                }
+            </p>
+        </section>
+        <section>
+            <h2>@T["table.device"]</h2>
+            <p>
+                <strong>@Model.Brand @Model.Model</strong> (@T.Of(Model.DeviceKind))
+                @if (Model.Imei is not null)
+                {
+                    <br />@:IMEI <code>@Model.Imei</code>
+                }
+                @if (Model.Serial is not null)
+                {
+                    <br />@T["workorder.serial"] <code>@Model.Serial</code>
+                }
+            </p>
+        </section>
+    </div>
+
+    <section>
+        <h2>@T["field.complaint"]</h2>
+        <p>@Model.Complaint</p>
+    </section>
+    <div class="receipt-grid">
+        <section>
+            <h2>@T["receipt.condition"]</h2>
+            <p>@(Model.Condition ?? T["receipt.not_given"])</p>
+        </section>
+        <section>
+            <h2>@T["receipt.received_items"]</h2>
+            <p>@(Model.Accessories ?? T["receipt.device_only"])</p>
+            @if (Model.HasPasscode)
+            {
+                <p class="small">@T["receipt.passcode"]</p>
+            }
+        </section>
+    </div>
+
+    <section class="receipt-track">
+        <img src="/work-orders/@id/qr.svg" alt="@T["receipt.qr"]" width="96" height="96" />
+        <div>
+            <h2>@T["receipt.track_title"]</h2>
+            <p>@T["receipt.track_text"]</p>
+            <p><span class="url">@Model.TrackingUrl.AbsoluteUri</span><br />@T["workorder.tracking_code"] <code>@Model.TrackingCode</code></p>
+        </div>
+    </section>
+
+    <section class="terms">
+        <h2>@T["receipt.terms"]</h2>
+        <ol>
+            <li>@T["receipt.term_quote"]</li>
+            @if (Model.WarrantyDays > 0)
+            {
+                <li>@T["receipt.term_warranty", Model.WarrantyDays]</li>
+            }
+            else
+            {
+                <li>@T["receipt.term_no_warranty"]</li>
+            }
+            <li>@T["receipt.term_data"]</li>
+            <li>@T["receipt.term_pickup"]</li>
+        </ol>
+    </section>
+
+    <footer class="signatures">
+        <div><span class="line"></span>@T["receipt.handed_by", Model.CustomerName]</div>
+        <div><span class="line"></span>@T["receipt.received_by", Model.ReceivedBy ?? Model.ShopName]</div>
+    </footer>
+</article>

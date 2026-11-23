@@ -1,0 +1,185 @@
+using System.Net.Http.Headers;
+using Lib.Net.Http.WebPush;
+using Lib.Net.Http.WebPush.Authentication;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.Demo;
+using Tamirhane.Application.Shops;
+using Tamirhane.Infrastructure.Background;
+using Tamirhane.Infrastructure.Email;
+using Tamirhane.Infrastructure.Identity;
+using Tamirhane.Infrastructure.Notifications;
+using Tamirhane.Infrastructure.Persistence;
+using Tamirhane.Infrastructure.Printing;
+
+namespace Tamirhane.Infrastructure;
+
+public static class DependencyInjection
+{
+    /// <param name="keysDirectory">
+    /// Data Protection anahtarlarının klasörü (yayında systemd'nin STATE_DIRECTORY'si). Boşsa anahtarlar veritabanında
+    /// durur (geliştirme ve testler).
+    /// </param>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string? keysDirectory = null)
+    {
+        services.AddDbContext<TamirhaneDbContext>(options => Configure(options, connectionString));
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TamirhaneDbContext>());
+        services.AddScoped<IShopRepository, ShopRepository>();
+        services.AddScoped<IStaffRepository, StaffRepository>();
+        services.AddScoped<IBranchRepository, BranchRepository>();
+        services.AddScoped<IShopSettings, ShopSettingsReader>();
+        services.AddScoped<IInvitationRepository, InvitationRepository>();
+        services.AddScoped<IWorkOrderRepository, WorkOrderRepository>();
+        services.AddScoped<ITrackingDirectory, TrackingDirectory>();
+        services.AddScoped<IDemoShops, DemoShops>();
+        services.AddScoped<IShopEraser, ShopEraser>();
+        services.AddHostedService<DemoCleanupWorker>();
+        services.AddScoped<IDashboardQueries, DashboardQueries>();
+        services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<IPartRepository, PartRepository>();
+        services.AddScoped<IStockRepository, StockRepository>();
+
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                PasswordPolicy.Apply(options.Password);
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = true; // doğrulanmamış hesap atölyeye giremez
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                options.Lockout.AllowedForNewUsers = true;
+                options.Tokens.PasswordResetTokenProvider = PasswordResetTokenProvider.ProviderName;
+            })
+            .AddEntityFrameworkStores<TamirhaneDbContext>()
+            .AddPasswordValidator<PasswordPolicyValidator>()
+            .AddDefaultTokenProviders()
+            .AddTokenProvider<PasswordResetTokenProvider>(PasswordResetTokenProvider.ProviderName);
+
+        // Çerezler, e-posta linklerindeki token'lar ve cihaz şifreleri bu anahtarlarla korunur; yeniden başlayınca
+        // (her yayında) oturumlar kapanmasın diye kalıcı bir yerde durur. Yayında sunucunun diskinde, sadece uygulamanın
+        // okuyabildiği klasörde: veritabanı sızsa bile sahte oturum çerezi üretilemez, cihaz şifreleri çözülemez.
+        var protection = services.AddDataProtection().SetApplicationName("Tamirhane");
+        if (string.IsNullOrWhiteSpace(keysDirectory))
+            protection.PersistKeysToDbContext<TamirhaneDbContext>();
+        else
+            protection.PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(keysDirectory, "keys")));
+        services.AddSingleton<IPasscodeProtector, PasscodeProtector>();
+
+        services.AddBackgroundJobs();
+        // Bildirim kanalları (#30 e-posta, #31 tarayıcı bildirimi). Veritabanı gerektikleri için arka plan kuyruğunun
+        // kendisinde değil burada kaydedilir; kuyruk testleri veritabanı olmadan kendi sahte kanallarıyla çalışır.
+        services.AddScoped<IWorkOrderNotificationHandler, CustomerStatusEmails>();
+        // Tarayıcı bildirimi varsayılan olarak kapalı; AddWebPush ayarla çağrılırsa açılır.
+        services.TryAddSingleton<IPushSettings>(new PushSettings(null));
+
+        // /health ucu veritabanına bağlanılabiliyor mu diye bakar (yayında sunucunun sağlık kontrolü).
+        services.AddHealthChecks().AddDbContextCheck<TamirhaneDbContext>("database");
+        return services;
+    }
+
+    /// <summary>
+    /// Arka plan işleri (e-posta, iş emri bildirimleri): istek işi ekler ve döner, tek bir işçi sırayla çalıştırır.
+    /// Seçenekler önceden kaydedildiyse (testte sıfır bekleme) onlar kullanılır.
+    /// </summary>
+    public static IServiceCollection AddBackgroundJobs(this IServiceCollection services)
+    {
+        services.AddSingleton<BackgroundJobQueue>();
+        services.TryAddSingleton(BackgroundJobOptions.Default);
+        services.AddHostedService<BackgroundJobWorker>();
+        services.AddSingleton<EmailOutbox>();
+        services.AddScoped<INotificationQueue, WorkOrderNotificationQueue>();
+        services.AddScoped<IWorkshopNotifier, WorkshopNotifier>();
+        services.AddScoped<WorkshopEmails>();
+        return services;
+    }
+
+    /// <summary>
+    /// Tarayıcı bildirimi (#31). Ayar yoksa (null) hiçbir şey kaydedilmez: özellik kapalıdır, takip sayfası düğmeyi
+    /// göstermez. Gönderim "webpush" adlı HttpClient ile yapılır (testler sahte bir push servisi bağlar).
+    /// </summary>
+    public static IServiceCollection AddWebPush(this IServiceCollection services, WebPushOptions? options)
+    {
+        if (options is null)
+            return services;
+
+        services.AddSingleton(options);
+        services.Replace(ServiceDescriptor.Singleton<IPushSettings>(new PushSettings(options.PublicKey)));
+        services.AddHttpClient(WebPushClientName, http => http.Timeout = TimeSpan.FromSeconds(15));
+        // İmza (JWT) tekrar tekrar üretilmesin diye kütüphane bir süre saklar; bu yüzden tek örnek.
+        services.AddSingleton(_ => new VapidAuthentication(options.PublicKey, options.PrivateKey) { Subject = options.Subject });
+        services.AddTransient(sp => new PushServiceClient(sp.GetRequiredService<IHttpClientFactory>().CreateClient(WebPushClientName))
+        {
+            DefaultAuthentication = sp.GetRequiredService<VapidAuthentication>(),
+            DefaultAuthenticationScheme = VapidAuthenticationScheme.Vapid,
+            AutoRetryAfter = false, // tekrar denemeyi arka plan kuyruğu yapar
+        });
+        services.AddScoped<PushDelivery>();
+        services.AddScoped<IWorkOrderNotificationHandler, CustomerPushNotifications>();
+        return services;
+    }
+
+    public const string WebPushClientName = "webpush";
+
+    /// <summary>Oturum (çerez), oturumdaki personel, hesap servisi ve e-posta gönderimi.</summary>
+    public static IServiceCollection AddAccounts(this IServiceCollection services, AccountOptions options)
+    {
+        services.AddSingleton(options);
+        services.AddSingleton<ITrackingLinks>(new TrackingLinks(options.PublicOrigin));
+        services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
+        new IdentityBuilder(typeof(ApplicationUser), services)
+            .AddSignInManager()
+            .AddClaimsPrincipalFactory<ShopClaimsPrincipalFactory>();
+
+        services.AddAuthentication(IdentityConstants.ApplicationScheme).AddIdentityCookies();
+        services.ConfigureApplicationCookie(cookie =>
+        {
+            // __Host- öneki tarayıcıya şunu zorunlu kılar: sadece HTTPS, Domain yok, Path=/; alt alan adı çerezi ezemez.
+            cookie.Cookie.Name = "__Host-tamirhane";
+            cookie.Cookie.HttpOnly = true; // JavaScript okuyamaz (XSS olsa bile oturum çalınamaz)
+            cookie.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            cookie.Cookie.SameSite = SameSiteMode.Lax; // başka siteden gelen POST'ta çerez gitmez
+            cookie.Cookie.Path = "/";
+            cookie.LoginPath = "/account/login";
+            cookie.LogoutPath = "/account/logout";
+            cookie.AccessDeniedPath = "/account/access-denied";
+            cookie.ExpireTimeSpan = TimeSpan.FromDays(14);
+            cookie.SlidingExpiration = true;
+        });
+        // Güvenlik damgası her istekte kontrol edilir: şifre değişince ya da oturumlar kapatılınca diğer cihazlar hemen düşer.
+        services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.Zero);
+
+        if (string.IsNullOrWhiteSpace(options.ResendApiKey))
+        {
+            services.AddSingleton<IEmailSender, LoggingEmailSender>();
+        }
+        else
+        {
+            services.AddHttpClient("resend", http =>
+            {
+                http.BaseAddress = new Uri("https://api.resend.com/");
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", options.ResendApiKey);
+                http.Timeout = TimeSpan.FromSeconds(15);
+            });
+            var from = EmailFrom.Parse(options.EmailFrom); // bozuksa uygulama açılırken durur
+            services.AddSingleton<IEmailSender>(sp => new ResendEmailSender(
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("resend"), from));
+        }
+        return services;
+    }
+
+    internal static void Configure(DbContextOptionsBuilder options, string connectionString) =>
+        options
+            .UseNpgsql(ConnectionStrings.Normalize(connectionString))
+            .UseSnakeCaseNamingConvention()
+            // Yapay zekâ istemcilerinin OAuth kayıtları (istemciler, izinler, token'lar): OpenIddict'in tabloları.
+            .UseOpenIddict();
+}

@@ -1,0 +1,14 @@
+@using Tamirhane.Application.Shops
+@model IReadOnlyList<BranchItem>
+@* JavaScript'siz: şube seçilip "Geç" ile gönderilir; CSP'de satır içi betik gerekmez. *@
+<form asp-controller="Branch" asp-action="Switch" method="post" class="inline-form">
+    <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+    <label for="branch-switcher" class="visually-hidden">@T["layout.branch"]</label>
+    <select id="branch-switcher" name="branchId">
+        @foreach (var branch in Model)
+        {
+            <option value="@branch.Id" selected="@branch.IsCurrent">@branch.Name</option>
+        }
+    </select>
+    <button type="submit" class="btn">@T["layout.branch_switch"]</button>
+</form>

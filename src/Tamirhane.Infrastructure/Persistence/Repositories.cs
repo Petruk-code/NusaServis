@@ -1,0 +1,294 @@
+using Microsoft.EntityFrameworkCore;
+using Tamirhane.Application.Abstractions;
+using Tamirhane.Application.WorkOrders;
+using Tamirhane.Domain.Customers;
+using Tamirhane.Domain.Inventory;
+using Tamirhane.Domain.Shops;
+using Tamirhane.Domain.WorkOrders;
+
+namespace Tamirhane.Infrastructure.Persistence;
+
+internal sealed class ShopRepository(TamirhaneDbContext db) : IShopRepository
+{
+    public Task<Shop?> GetAsync(Guid id, CancellationToken ct) => db.Shops.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public void Add(Shop shop, Branch firstBranch, Staff owner)
+    {
+        db.Shops.Add(shop);
+        db.Branches.Add(firstBranch);
+        db.Staff.Add(owner);
+    }
+}
+
+internal sealed class BranchRepository(TamirhaneDbContext db) : IBranchRepository
+{
+    public Task<Branch?> GetAsync(Guid id, CancellationToken ct) => db.Branches.FirstOrDefaultAsync(b => b.Id == id, ct);
+
+    public async Task<IReadOnlyList<Branch>> ListAsync(CancellationToken ct) =>
+        await db.Branches.OrderBy(b => b.CreatedAt).ThenBy(b => b.Id).ToListAsync(ct);
+
+    public void Add(Branch branch) => db.Branches.Add(branch);
+}
+
+/// <summary>İş kurallarını etkileyen atölye ayarları (garanti süresi, varsayılan KDV).</summary>
+internal sealed class ShopSettingsReader(TamirhaneDbContext db) : IShopSettings
+{
+    public async Task<ShopSettings> GetAsync(Guid shopId, CancellationToken ct) =>
+        await db.Shops.Where(s => s.Id == shopId).Select(s => new ShopSettings(s.WarrantyDays, s.DefaultVatRate, s.Locale)).SingleOrDefaultAsync(ct)
+        ?? throw new InvalidOperationException("Oturumun atölyesi yok.");
+}
+
+internal sealed class StaffRepository(TamirhaneDbContext db) : IStaffRepository
+{
+    public Task<Staff?> GetAsync(Guid id, CancellationToken ct) => db.Staff.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public async Task<IReadOnlyList<Staff>> ListActiveAsync(CancellationToken ct) =>
+        await db.Staff.Where(s => s.RemovedAt == null).OrderBy(s => s.Role).ThenBy(s => s.DisplayName).ToListAsync(ct);
+
+    public async Task<IReadOnlyDictionary<Guid, string>> NamesAsync(IEnumerable<Guid> ids, CancellationToken ct)
+    {
+        var wanted = ids.Distinct().ToList();
+        if (wanted.Count == 0)
+            return new Dictionary<Guid, string>();
+        return await db.Staff.Where(s => wanted.Contains(s.Id)).ToDictionaryAsync(s => s.Id, s => s.DisplayName, ct);
+    }
+
+    public void Add(Staff staff) => db.Staff.Add(staff);
+}
+
+internal sealed class InvitationRepository(TamirhaneDbContext db) : IInvitationRepository
+{
+    public Task<Invitation?> GetAsync(Guid id, CancellationToken ct) => db.Invitations.FirstOrDefaultAsync(i => i.Id == id, ct);
+
+    // Davet edilen kişinin oturumu yok; token 256 bit rastgele olduğu için filtre bilerek kapatılır.
+    public async Task<InvitationWithShop?> FindByTokenHashAsync(byte[] tokenHash, CancellationToken ct)
+    {
+        var row = await db.Invitations.IgnoreQueryFilters()
+            .Where(i => i.TokenHash == tokenHash)
+            .Join(db.Shops.IgnoreQueryFilters(), i => i.ShopId, s => s.Id, (i, s) => new
+            {
+                Invitation = i,
+                s.Name,
+                s.Locale,
+                FirstBranchId = db.Branches.IgnoreQueryFilters().Where(b => b.ShopId == s.Id)
+                    .OrderBy(b => b.CreatedAt).ThenBy(b => b.Id).Select(b => b.Id).First(),
+            })
+            .FirstOrDefaultAsync(ct);
+        return row is null ? null : new InvitationWithShop(row.Invitation, row.Name, row.Locale, row.FirstBranchId);
+    }
+
+    public async Task<IReadOnlyList<Invitation>> ListPendingAsync(DateTimeOffset now, string? email, CancellationToken ct) =>
+        await db.Invitations
+            .Where(i => i.AcceptedAt == null && i.RevokedAt == null && i.ExpiresAt > now && (email == null || i.Email == email))
+            .ToListAsync(ct);
+
+    public void Add(Invitation invitation) => db.Invitations.Add(invitation);
+}
+
+internal sealed class WorkOrderRepository(TamirhaneDbContext db) : IWorkOrderRepository
+{
+    // Bir iş emri her zaman parçalarıyla birlikte yüklenir; domain kuralları eksik veriyle çalışmasın.
+    private IQueryable<WorkOrder> Full => db.WorkOrders
+        .Include(o => o.History)
+        .Include(o => o.QuoteLines)
+        .Include(o => o.Payments)
+        .Include(o => o.Notes)
+        .Include(o => o.PushSubscriptions)
+        .AsSplitQuery();
+
+    public Task<WorkOrder?> GetAsync(Guid id, CancellationToken ct) =>
+        Full.FirstOrDefaultAsync(o => o.Id == id, ct);
+
+    // Müşteri oturum açmadan takip koduyla bakar; kod tahmin edilemez olduğu için filtre bilerek kapatılır.
+    public Task<WorkOrder?> GetByTrackingCodeAsync(string trackingCode, CancellationToken ct) =>
+        Full.IgnoreQueryFilters().FirstOrDefaultAsync(o => o.TrackingCode == trackingCode, ct);
+
+    /// <summary>
+    /// Sayaç tek SQL komutuyla artar: aynı anda açılan iki iş emri aynı numarayı alamaz.
+    /// Komut kaydın kendisinden ayrı çalışır; kayıt başarısız olursa o numara atlanır (kabul edilen bedel).
+    /// </summary>
+    public async Task<int> NextSequenceAsync(Guid shopId, int year, CancellationToken ct)
+    {
+        var values = await db.Database.SqlQuery<int>($"""
+            INSERT INTO work_order_sequences (shop_id, year, value) VALUES ({shopId}, {year}, 1)
+            ON CONFLICT (shop_id, year) DO UPDATE SET value = work_order_sequences.value + 1
+            RETURNING value AS "Value"
+            """).ToListAsync(ct);
+        return values[0];
+    }
+
+    public async Task<IReadOnlyList<WorkOrderRow>> SearchAsync(
+        WorkOrderCriteria? criteria, IReadOnlyCollection<WorkOrderStatus>? statuses, DateTimeOffset? createdBefore, int take, CancellationToken ct)
+    {
+        var query =
+            from o in db.WorkOrders
+            join c in db.Customers on o.CustomerId equals c.Id
+            join d in db.Devices on o.DeviceId equals d.Id
+            select new { o, c, d };
+
+        if (statuses is not null)
+            query = query.Where(x => statuses.Contains(x.o.Status));
+        if (createdBefore is { } before)
+            query = query.Where(x => x.o.CreatedAt < before);
+
+        if (criteria is not null)
+        {
+            // Kullanıcının yazdığı metin LIKE desenine parametre olarak gider; % ve _ kaçışlanır (joker olarak çalışmasın).
+            var like = criteria.Text is { } t ? "%" + t.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_") + "%" : null;
+            var suffix = criteria.NumberSuffix is { } s ? "%-" + s : null;
+            var serial = criteria.Text?.ToUpperInvariant();
+            query = query.Where(x =>
+                (like != null && (EF.Functions.ILike(x.c.Name, like) || EF.Functions.ILike(x.d.Brand + " " + x.d.Model, like) || x.d.Serial == serial))
+                || (criteria.Number != null && x.o.Number == criteria.Number)
+                || (suffix != null && EF.Functions.Like(x.o.Number, suffix))
+                || (criteria.Phone != null && x.c.Phone == criteria.Phone)
+                || (criteria.Imei != null && x.d.Imei == criteria.Imei)
+                || (criteria.TrackingCode != null && x.o.TrackingCode == criteria.TrackingCode));
+        }
+
+        return await query
+            .OrderBy(x => x.o.CreatedAt)
+            .Take(take)
+            .Select(x => new WorkOrderRow(x.o.Id, x.o.Number, x.d.Brand, x.d.Model, x.o.Complaint, x.c.Name, x.o.Status, x.o.CreatedAt, x.o.DeliveredAt))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> NumbersAsync(IEnumerable<Guid> ids, CancellationToken ct)
+    {
+        var wanted = ids.Distinct().ToList();
+        if (wanted.Count == 0)
+            return new Dictionary<Guid, string>();
+        return await db.WorkOrders.Where(o => wanted.Contains(o.Id)).ToDictionaryAsync(o => o.Id, o => o.Number, ct);
+    }
+
+    public async Task<IReadOnlyList<WorkOrderLink>> WarrantyReturnsAsync(Guid previousId, CancellationToken ct) =>
+        await db.WorkOrders.Where(o => o.WarrantyOfId == previousId).OrderBy(o => o.CreatedAt)
+            .Select(o => new WorkOrderLink(o.Id, o.Number)).ToListAsync(ct);
+
+    public void Add(WorkOrder order) => db.WorkOrders.Add(order);
+}
+
+// Kiracı filtresi bilerek kapalı (müşteri oturum açmaz); onun yerine dört kimliğin aynı atölyede olması şartı var.
+internal sealed class TrackingDirectory(TamirhaneDbContext db) : ITrackingDirectory
+{
+    public Task<TrackingParties?> GetAsync(Guid shopId, Guid branchId, Guid customerId, Guid deviceId, CancellationToken ct) =>
+        (from s in db.Shops.IgnoreQueryFilters()
+         join b in db.Branches.IgnoreQueryFilters() on s.Id equals b.ShopId
+         join c in db.Customers.IgnoreQueryFilters() on s.Id equals c.ShopId
+         join d in db.Devices.IgnoreQueryFilters() on c.Id equals d.CustomerId
+         where s.Id == shopId && b.Id == branchId && c.Id == customerId && d.Id == deviceId && d.ShopId == shopId
+         select new TrackingParties(s.Name, b.Name, b.Address, b.Phone, c.Name, d.Kind, d.Brand, d.Model, s.Locale))
+        .AsNoTracking()
+        .SingleOrDefaultAsync(ct);
+}
+
+internal sealed class CustomerRepository(TamirhaneDbContext db) : ICustomerRepository
+{
+    public Task<Customer?> GetAsync(Guid id, CancellationToken ct) =>
+        db.Customers.FirstOrDefaultAsync(c => c.Id == id, ct);
+
+    public Task<Customer?> FindByPhoneAsync(PhoneNumber phone, CancellationToken ct) =>
+        db.Customers.FirstOrDefaultAsync(c => c.Phone == phone, ct);
+
+    public void Add(Customer customer) => db.Customers.Add(customer);
+}
+
+internal sealed class DeviceRepository(TamirhaneDbContext db) : IDeviceRepository
+{
+    public Task<Device?> GetAsync(Guid id, CancellationToken ct) =>
+        db.Devices.FirstOrDefaultAsync(d => d.Id == id, ct);
+
+    public async Task<IReadOnlyList<Device>> ListByCustomerAsync(Guid customerId, CancellationToken ct) =>
+        await db.Devices.Where(d => d.CustomerId == customerId).OrderBy(d => d.Brand).ThenBy(d => d.Model).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<string>> KnownModelsAsync(DeviceKind kind, string brand, int take, CancellationToken ct) =>
+        await db.Devices
+            // ILIKE değil: markadaki % ve _ joker sayılmasın. Büyük/küçük harf farkı yok sayılır.
+            .Where(d => d.Kind == kind && d.Brand.ToLower() == brand.ToLower())
+            .GroupBy(d => d.Model)
+            .OrderByDescending(g => g.Count()).ThenBy(g => g.Key)
+            .Select(g => g.Key)
+            .Take(take)
+            .ToListAsync(ct);
+
+    public void Add(Device device) => db.Devices.Add(device);
+}
+
+internal sealed class PartRepository(TamirhaneDbContext db) : IPartRepository
+{
+    public Task<Part?> GetAsync(Guid id, CancellationToken ct) =>
+        db.Parts.FirstOrDefaultAsync(p => p.Id == id, ct);
+
+    public Task<bool> SkuExistsAsync(string sku, Guid? exceptPartId, CancellationToken ct) =>
+        db.Parts.AnyAsync(p => p.Sku == sku && p.Id != exceptPartId, ct);
+
+    public Task<IReadOnlyList<PartStock>> ListActiveWithStockAsync(Guid branchId, CancellationToken ct) =>
+        ListWithStockAsync(branchId, includeInactive: false, ct);
+
+    public async Task<IReadOnlyList<PartStock>> ListWithStockAsync(Guid branchId, bool includeInactive, CancellationToken ct)
+    {
+        var rows = await db.Parts
+            .Where(p => includeInactive || p.IsActive)
+            .Select(p => new
+            {
+                Part = p,
+                Quantity = db.StockLevels.Where(l => l.PartId == p.Id && l.BranchId == branchId).Select(l => (int?)l.Quantity).FirstOrDefault() ?? 0,
+            })
+            .ToListAsync(ct);
+        return rows.Select(r => new PartStock(r.Part, r.Quantity)).ToList();
+    }
+
+    public void Add(Part part) => db.Parts.Add(part);
+}
+
+internal sealed class StockRepository(TamirhaneDbContext db) : IStockRepository
+{
+    public Task<StockLevel?> GetLevelAsync(Guid partId, Guid branchId, CancellationToken ct) =>
+        db.StockLevels.FirstOrDefaultAsync(l => l.PartId == partId && l.BranchId == branchId, ct);
+
+    public async Task<BranchStock> GetBranchStockAsync(Guid branchId, IEnumerable<Guid> partIds, CancellationToken ct)
+    {
+        var ids = partIds.ToList();
+        var levels = ids.Count == 0
+            ? []
+            : await db.StockLevels.Where(l => l.BranchId == branchId && ids.Contains(l.PartId)).ToListAsync(ct);
+        return new BranchStock(branchId, levels);
+    }
+
+    public async Task<IReadOnlyList<StockMovement>> ListMovementsAsync(Guid partId, Guid branchId, int take, CancellationToken ct) =>
+        await db.StockMovements.Where(m => m.PartId == partId && m.BranchId == branchId)
+            .OrderByDescending(m => m.At).ThenByDescending(m => m.Id).Take(take).ToListAsync(ct);
+
+    public void AddLevel(StockLevel level) => db.StockLevels.Add(level);
+
+    public void AddMovements(IEnumerable<StockMovement> movements) => db.StockMovements.AddRange(movements);
+}
+
+/// <summary>Panel sayıları. Kiracı filtresi iş emirlerinde; ödemeler iş emri üzerinden süzülür.</summary>
+internal sealed class DashboardQueries(TamirhaneDbContext db) : IDashboardQueries
+{
+    public async Task<WorkOrderCounts> CountsAsync(DateTimeOffset overdueBefore, CancellationToken ct)
+    {
+        // Tek sorgu: açık işler duruma ve gecikmeye göre gruplanır, sayılar bellekte toplanır (en fazla birkaç satır).
+        var groups = await db.WorkOrders
+            .Where(o => o.Status != WorkOrderStatus.Delivered && o.Status != WorkOrderStatus.Cancelled)
+            .GroupBy(o => new { o.Status, Late = o.CreatedAt < overdueBefore })
+            .Select(g => new { g.Key.Status, g.Key.Late, Count = g.Count() })
+            .ToListAsync(ct);
+
+        int Of(params WorkOrderStatus[] statuses) => groups.Where(g => statuses.Contains(g.Status)).Sum(g => g.Count);
+        return new WorkOrderCounts(
+            Open: groups.Sum(g => g.Count),
+            AwaitingApproval: Of(WorkOrderStatus.AwaitingApproval),
+            InRepair: Of(WorkOrderStatus.InRepair),
+            ReadyForPickup: Of(WorkOrderStatus.Ready, WorkOrderStatus.Declined),
+            Overdue: groups.Where(g => g.Late).Sum(g => g.Count));
+    }
+
+    public async Task<decimal> RevenueAsync(DateTimeOffset start, DateTimeOffset end, CancellationToken ct) =>
+        await (from p in db.Set<Payment>()
+               join o in db.WorkOrders on p.WorkOrderId equals o.Id
+               where p.At >= start && p.At < end
+               select p.Kind == PaymentKind.Refund ? -p.Amount : p.Amount)
+            .SumAsync(ct);
+}
