@@ -1,55 +1,55 @@
-﻿# Local PostgreSQL dev (Scoop, Windows)
+﻿# Pengembangan PostgreSQL lokal (Scoop, Windows)
 
-This repo is configured for local PostgreSQL in `src/Tamirhane.Web/appsettings.Development.json`:
+Repo ini dikonfigurasi untuk PostgreSQL lokal di `src/Tamirhane.Web/appsettings.Development.json`:
 
 ```json
 "ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
 ```
 
-`Program.cs` loads `.env` in Development with lowest priority. Keep `DATABASE_URL` commented in `.env` for local dev; otherwise it overrides the local connection string.
+`Program.cs` memuat `.env` pada Development dengan prioritas terendah. Biarkan `DATABASE_URL` tetap dikomentari di `.env` untuk pengembangan lokal; jika diisi, nilainya mengalahkan connection string lokal.
 
-## Prerequisites
+## Prasyarat
 
 ```powershell
 scoop install postgresql
 dotnet --info
-dotnet tool install --global dotnet-ef   # or: dotnet tool update --global dotnet-ef
+dotnet tool install --global dotnet-ef   # atau: dotnet tool update --global dotnet-ef
 ```
 
-If `dotnet ef` cannot find .NET, open a new shell or set:
+Jika `dotnet ef` tidak menemukan .NET, buka shell baru atau set:
 
 ```powershell
 $env:DOTNET_ROOT="$env:USERPROFILE\scoop\apps\dotnet-sdk\current"
 $env:Path="$env:DOTNET_ROOT;$env:USERPROFILE\.dotnet\tools;$env:Path"
 ```
 
-## Quick start
+## Mulai cepat
 
 ```powershell
-.\scripts\dev-local.ps1 check      # verify dotnet/postgres tools
-.\scripts\dev-local.ps1 init       # one-time initdb (trust auth, local dev only)
-.\scripts\dev-local.ps1 start      # start postgres (idempotent; run also does this)
-.\scripts\dev-local.ps1 create-db  # create tamirhane user plus tamirhane/tamirhane_test DBs if missing
+.\scripts\dev-local.ps1 check      # cek dotnet/postgres
+.\scripts\dev-local.ps1 init       # initdb sekali saja (trust auth, hanya lokal)
+.\scripts\dev-local.ps1 start      # menyalakan postgres (idempoten; run juga melakukan ini)
+.\scripts\dev-local.ps1 create-db  # membuat user tamirhane serta DB tamirhane/tamirhane_test jika belum ada
 .\scripts\dev-local.ps1 migrate    # dotnet ef database update
-.\scripts\dev-local.ps1 run        # dotnet run web; auto-starts PostgreSQL if stopped
+.\scripts\dev-local.ps1 run        # dotnet run web; menyalakan PostgreSQL otomatis jika mati
 ```
 
-Run integration tests against the separate test database:
+Jalankan test integrasi terhadap database test yang terpisah:
 
 ```powershell
 $env:TEST_DATABASE_URL="Host=localhost;Port=5432;Database=tamirhane_test;Username=tamirhane;Password=tamirhane"
 dotnet test
 ```
 
-Stop PostgreSQL with:
+Hentikan PostgreSQL dengan:
 
 ```powershell
 .\scripts\dev-local.ps1 stop
 ```
 
-## Neon later
+## Neon kemudian
 
-Keep Neon credentials in the ignored `.env.neon`; do not copy them into `.env`. To use that file for the app, set `DOTENV_FILE=neon` for the current shell:
+Simpan kredensial Neon di `.env.neon` yang diabaikan Git; jangan salin ke `.env`. Untuk memakai file itu pada aplikasi, set `DOTENV_FILE=neon` di shell saat ini:
 
 ```powershell
 $env:DOTENV_FILE="neon"
@@ -57,6 +57,6 @@ dotnet ef database update --project src/Tamirhane.Infrastructure --startup-proje
 dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
-Use these directly so the local PostgreSQL helper is not started.
+Gunakan perintah di atas langsung agar pembantu PostgreSQL lokal tidak ikut berjalan.
 
-Without `DOTENV_FILE`, Development keeps reading `.env`. Real environment variables still win, and tests use `DOTENV=off` plus `TEST_DATABASE_URL`.
+Tanpa `DOTENV_FILE`, Development tetap membaca `.env`. Variabel lingkungan sungguhan tetap menang, dan test memakai `DOTENV=off` plus `TEST_DATABASE_URL`.

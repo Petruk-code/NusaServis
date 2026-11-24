@@ -7,13 +7,13 @@ using Tamirhane.Web.Localization;
 namespace Tamirhane.Web.Controllers;
 
 /// <summary>
-/// Arama motorları için (#42): hangi sayfaların taranacağı (robots.txt) ve dizine girecek sayfaların iki dildeki
-/// adresleri (sitemap.xml, hreflang ile). Uygulama sayfaları ve müşterinin takip linkleri taranmaz.
+/// Untuk mesin pencari (#42): halaman yang boleh dipindai (robots.txt) dan alamat versi Indonesia/Inggris
+/// untuk halaman yang masuk indeks (sitemap.xml, hreflang). Halaman aplikasi dan tautan pelacakan pelanggan tidak dipindai.
 /// </summary>
 [AllowAnonymous]
 public sealed class SeoController : Controller
 {
-    /// <summary>Dizine girecek sayfalar (Türkçe yol; İngilizcesi /en ile).</summary>
+    /// <summary>Halaman yang masuk indeks (Bahasa Indonesia di `/`; English di `/en`).</summary>
     private static readonly string[] Pages = ["/", "/privacy", "/terms"];
 
     // Uygulamanın kendisi, hesap sayfaları ve takip linkleri: oturum ister ya da kişiye özeldir.
@@ -37,15 +37,15 @@ public sealed class SeoController : Controller
         XNamespace xhtml = "http://www.w3.org/1999/xhtml";
         var urls = Pages.SelectMany(page =>
         {
-            var tr = Origin + page;
+            var id = Origin + page;
             var en = Origin + LanguagePrefix.English + page;
             XElement[] alternates =
             [
-                new(xhtml + "link", new XAttribute("rel", "alternate"), new XAttribute("hreflang", "tr"), new XAttribute("href", tr)),
+                new(xhtml + "link", new XAttribute("rel", "alternate"), new XAttribute("hreflang", "id"), new XAttribute("href", id)),
                 new(xhtml + "link", new XAttribute("rel", "alternate"), new XAttribute("hreflang", "en"), new XAttribute("href", en)),
-                new(xhtml + "link", new XAttribute("rel", "alternate"), new XAttribute("hreflang", "x-default"), new XAttribute("href", tr)),
+                new(xhtml + "link", new XAttribute("rel", "alternate"), new XAttribute("hreflang", "x-default"), new XAttribute("href", id)),
             ];
-            return new[] { tr, en }.Select(loc => new XElement(sm + "url", new XElement(sm + "loc", loc), alternates));
+            return new[] { id, en }.Select(loc => new XElement(sm + "url", new XElement(sm + "loc", loc), alternates));
         });
         var document = new XDocument(new XDeclaration("1.0", "utf-8", null),
             new XElement(sm + "urlset", new XAttribute(XNamespace.Xmlns + "xhtml", xhtml), urls));

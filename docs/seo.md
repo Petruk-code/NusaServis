@@ -1,17 +1,16 @@
 # SEO (#42)
 
-Amaç: tamir atölyesi için iş takip programı arayan biri Tamirhane'yi bulsun. Dizine sadece tanıtım ve yasal sayfalar
-girer (`/`, `/privacy`, `/terms` ve `/en/...` karşılıkları); uygulama, hesap sayfaları ve müşteri takip linkleri girmez.
+Tujuan: seseorang yang mencari perangkat lunak pelacakan kerja untuk bengkel perbaikan menemukan OpenRespairPos / Tamirhane. Hanya halaman promosi dan legal yang masuk indeks (`/`, `/privacy`, `/terms` dan padanan `/en/...`); aplikasi, halaman akun, dan tautan pelacakan pelanggan tidak masuk.
 
-## Anahtar kelimeler
+## Kata kunci
 
-**Türkçe**
+**Bahasa Indonesia**
 
-- Genel (rekabetli): teknik servis programı, servis takip programı, tamir takip programı, teknik servis yazılımı
-- Ücretsiz arayanlar: ücretsiz teknik servis programı, ücretsiz servis takip programı, bedava tamir takip programı
-- Atölye türü: telefon tamircisi programı, cep telefonu servis programı, bilgisayar tamir takip programı, beyaz eşya servis programı
-- İşin kendisi: iş emri takip programı, cihaz kabul fişi programı, servis fişi programı, arıza takip programı, teklif onayı
-- Müşteri tarafı: müşteri cihaz takip sayfası, tamir durum sorgulama, servis durumu takip linki
+- Umum (kompetitif): program servis teknis, program pelacakan servis, program pelacakan perbaikan, perangkat lunak servis teknis
+- Yang mencari gratis: program servis teknis gratis, program pelacakan servis gratis, program pelacakan perbaikan gratis
+- Jenis bengkel: program bengkel perbaikan ponsel, program servis ponsel, program pelacakan perbaikan komputer, program servis peralatan rumah tangga
+- Inti pekerjaan: program pelacakan pesanan kerja, program tanda terima penerimaan perangkat, program nota servis, program pelacakan kerusakan, persetujuan penawaran
+- Sisi pelanggan: halaman pelacakan perangkat pelanggan, pengecekan status perbaikan, tautan pelacakan status servis
 
 **English**
 
@@ -21,36 +20,34 @@ girer (`/`, `/privacy`, `/terms` ve `/en/...` karşılıkları); uygulama, hesap
 - The job: work order tracking for repair shops, device check-in receipt, repair quote approval, parts inventory for repair shop
 - Customer side: repair status tracking page, customer repair status updates
 
-Kelimeler metne doğal cümle olarak girer, sıralanıp doldurulmaz.
+Kata-kata masuk ke dalam teks sebagai kalimat alami, bukan ditumpuk atau diisi begitu saja.
 
-## Sayfalarda
+## Di halaman
 
-| Yer | Türkçe | English |
+| Tempat | Bahasa Indonesia | English |
 |---|---|---|
-| Başlık (`/`) | Tamirhane: Ücretsiz teknik servis ve tamir takip programı | Tamirhane: Free repair shop software and repair tracking |
-| Açıklama (`/`) | Tamir atölyeleri için ücretsiz servis takip programı: cihaz kabul fişi, iş emri, teklif onayı, parça stoku; müşteri cihazını telefondan takip eder. | Free repair shop software: check-in receipts, work orders, quote approval and parts stock. Customers follow their device's repair on their phone. |
-| `h1` | Tamir atölyesi için iş emri takibi | Work order tracking for repair shops |
+| Judul (`/`) | Tamirhane: Software bengkel gratis dan pelacakan servis | Tamirhane: Free repair shop software and repair tracking |
+| Deskripsi (`/`) | Perangkat lunak servis gratis untuk bengkel perbaikan: tanda terima penerimaan perangkat, pesanan kerja, persetujuan penawaran, stok suku cadang; pelanggan memantau perangkatnya dari ponsel. | Free repair shop software: check-in receipts, work orders, quote approval and parts stock. Customers follow their device's repair on their phone. |
+| `h1` | Pelacakan pesanan kerja untuk bengkel perbaikan | Work order tracking for repair shops |
 
-- Her sayfada `<title>`, meta açıklama (160 karakterden kısa, test denetler), canonical, `hreflang` (tr, en, x-default),
-  Open Graph ve Twitter kartı (`/img/og-tr.png`, `/img/og-en.png`, 1200×630), tek `h1`.
-- Tanıtım sayfasında JSON-LD `SoftwareApplication` (ücretsiz, web, iki dil).
-- Dil adreste: Türkçe önsüz, İngilizce `/en`. Tarayıcı dili adres seçmez; arama motoru her adreste tek dil görür.
-- `robots.txt` uygulama yollarını kapatır, `sitemap.xml` altı adresi iki dilin karşılıklarıyla listeler.
-- Uygulama, hesap ve hata sayfalarında `noindex`; takip sayfasında `noindex, nofollow` ve `X-Robots-Tag`.
+- Setiap halaman memiliki `<title>`, meta deskripsi (lebih pendek dari 160 karakter, diperiksa tes), canonical, `hreflang` (`id`, `en`, `x-default`; `x-default` mengarah ke URL Bahasa Indonesia), Open Graph dan kartu Twitter (`/img/og-id.png`, `/img/og-en.png`, `/img/og-tr.png`, 1200×630). Tes halaman depan mengharapkan `og-id` untuk `/` dan `og-en` untuk `/en/`. Setiap halaman hanya satu `h1`.
+- Halaman promosi memuat JSON-LD `SoftwareApplication` (gratis, web, dua bahasa).
+- Bahasa tercermin di alamat: Bahasa Indonesia di `/` (tanpa prefiks), English di `/en`. Bahasa browser tidak memilih alamat; mesin pencari melihat satu bahasa per alamat. Resource Turki (`tr.json`) hanya untuk kompatibilitas data lama, bukan prefiks UI Turki publik.
+- `robots.txt` menutup jalur aplikasi; `sitemap.xml` mencantumkan enam alamat beserta padanan kedua bahasanya (`/`, `/en/`, `/privacy`, `/en/privacy`, `/terms`, `/en/terms`).
+- Halaman aplikasi, akun, dan error menggunakan `noindex`; halaman pelacakan menggunakan `noindex, nofollow` dan `X-Robots-Tag`.
 
-## Repo ve dışarıdaki metinler
+## Teks di repo dan di luar
 
-- GitHub açıklaması: "Free repair shop software: work orders, check-in receipts, quote approval, parts stock and a
+- Deskripsi GitHub: "Free repair shop software: work orders, check-in receipts, quote approval, parts stock and a
   customer tracking page. ASP.NET Core MVC, Clean Architecture."
 - Topics: repair-shop, repair-shop-software, work-order, ticketing, aspnet-core, clean-architecture, csharp, postgresql,
   htmx, multi-tenant, web-push
-- README'nin ilk paragrafı aynı ifadeleri taşır (#41).
+- Paragraf pertama `README.md` (kanonik berbahasa Inggris) memuat ungkapan yang sama (#41); `README.id.md` adalah versi Bahasa Indonesia dan `README.tr.md` versi Turki, keduanya ditautkan dari `README.md` dan `README.tr.md`.
 
-## Search Console (kullanıcı yapar)
+## Search Console (dilakukan pengguna)
 
-1. https://search.google.com/search-console → Mülk ekle → **Alan adı** `miracdeprem.com` zaten doğrulanmışsa
-   tamirhane alt alanı onun altında görünür; değilse **URL öneki** `https://tamirhane.miracdeprem.com/`.
-2. URL öneki seçildiyse doğrulama: HTML etiketi yerine **DNS (TXT kaydı)** önerilir (Vercel DNS'e eklenir).
-3. Dizin oluşturma → Site haritaları → `sitemap.xml` gönder.
-4. URL denetimi → `https://tamirhane.miracdeprem.com/` ve `/en/` için "Dizine eklenmesini iste".
-5. Birkaç gün sonra Sayfalar raporunda iki dilin de "Dizine eklendi" olduğuna, hreflang uyarısı olmadığına bakılır.
+1. https://search.google.com/search-console → Tambah properti → **Domain** `miracdeprem.com` jika sudah terverifikasi, subdomain tamirhane akan muncul di bawahnya; jika tidak, **Prefiks URL** `https://tamirhane.miracdeprem.com/`.
+2. Jika prefiks URL dipilih, untuk verifikasi sebaiknya gunakan **DNS (catatan TXT)**, bukan tag HTML (ditambahkan ke DNS Vercel).
+3. Pengindeksan → Peta situs → kirim `sitemap.xml`.
+4. Inspeksi URL → untuk `https://tamirhane.miracdeprem.com/` dan `/en/`, pilih "Minta pengindeksan".
+5. Beberapa hari kemudian, di laporan Halaman, periksa bahwa kedua bahasa berstatus "Terindeks" dan tidak ada peringatan hreflang.

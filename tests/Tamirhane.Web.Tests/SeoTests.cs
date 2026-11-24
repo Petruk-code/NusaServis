@@ -76,11 +76,17 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
         var response = await app.NewBrowser().GetAsync("/sitemap.xml");
         var xml = XDocument.Parse(await response.Content.ReadAsStringAsync());
         XNamespace sm = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        XNamespace xhtml = "http://www.w3.org/1999/xhtml";
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var locations = xml.Descendants(sm + "loc").Select(l => l.Value).ToList();
         Assert.Equal([$"{Origin}/", $"{Origin}/en/", $"{Origin}/privacy", $"{Origin}/en/privacy", $"{Origin}/terms", $"{Origin}/en/terms"], locations);
         Assert.All(xml.Descendants(sm + "url"), url => Assert.Equal(3, url.Elements().Count(e => e.Name.LocalName == "link")));
+        var links = xml.Descendants(xhtml + "link").ToList();
+        Assert.Contains(links, l => (string?)l.Attribute("hreflang") == "id" && (string?)l.Attribute("href") == $"{Origin}/");
+        Assert.Contains(links, l => (string?)l.Attribute("hreflang") == "en" && (string?)l.Attribute("href") == $"{Origin}/en/");
+        Assert.Contains(links, l => (string?)l.Attribute("hreflang") == "x-default" && (string?)l.Attribute("href") == $"{Origin}/");
+        Assert.DoesNotContain(xml.ToString(), "hreflang=\"tr\"");
     }
 
     [GeneratedRegex("<script type=\"application/ld(?:\\+|&#x2B;)json\">(.*?)</script>", RegexOptions.Singleline)]

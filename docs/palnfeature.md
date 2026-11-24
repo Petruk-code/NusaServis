@@ -1,6 +1,6 @@
 ## Konteks Proyek & Batasan Teknis (PENTING)
 - **Arsitektur:** ASP.NET Core MVC (Clean Architecture: `Domain`, `Application`, `Infrastructure`, `Web`) dengan PostgreSQL (Neon Cloud).
-- **Runtime:** SDK terinstal adalah **.NET 11** (`DOTNET_ROLL_FORWARD=Major` sudah aktif di environment).
+- **Runtime:** SDK terinstal adalah **.NET 11** dengan target proyek `net10.0` (`DOTNET_ROLL_FORWARD=Major` aktif di environment).
 - **Guardrails (Larangan Keras):**
   1. **JANGAN** mengubah nama variabel C#, nama properti entity/model, nama tabel database, atau membuat migrasi EF Core baru.
   2. **JANGAN** meng-hardcode nama toko tertentu (misal "Absolute Komputer"); biarkan tetap multi-tenant agar bisa digunakan untuk banyak klien.
@@ -9,7 +9,9 @@
 
 ---
 
-# Plan Lokalisasi & Adaptasi Indonesia (OpenRepairPOS / Tamirhane)
+# Rencana Lokalisasi & Adaptasi Indonesia (OpenRespairPos / Tamirhane)
+
+Status: sudah diterapkan pada branch `feat/OpenRespairPos`. Ringkasan untuk pengguna ada di [README.id.md](../README.id.md).
 
 Saya ingin mengadaptasi proyek ASP.NET Core MVC (`tamirhane-repair-tracker`) ini agar siap digunakan untuk **pusat servis komputer, laptop, dan perangkat IT** di **Indonesia** (tetap multi-tenant tanpa meng-hardcode nama toko tertentu sehingga bisa digunakan oleh klien lain).
 
