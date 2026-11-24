@@ -47,13 +47,13 @@ Sistem pelacakan pesanan kerja untuk bengkel servis dan perbaikan. ASP.NET Core 
 
 ```
 src/
-  NusaServis.Domain          entitas, objek nilai, aturan bisnis, kesalahan domain
-  NusaServis.Application     kasus penggunaan, antarmuka (repositori, jam, email, push, pengguna/bengkel saat ini)
-  NusaServis.Infrastructure  EF Core + Npgsql, Identity, Resend, Web Push, pembuatan QR
-  NusaServis.Web             controller MVC, view, autentikasi, lokalisasi, header keamanan
+  Tamirhane.Domain          entitas, objek nilai, aturan bisnis, kesalahan domain
+  Tamirhane.Application     kasus penggunaan, antarmuka (repositori, jam, email, push, pengguna/bengkel saat ini)
+  Tamirhane.Infrastructure  EF Core + Npgsql, Identity, Resend, Web Push, pembuatan QR
+  Tamirhane.Web             controller MVC, view, autentikasi, lokalisasi, header keamanan
 tests/
-  NusaServis.Domain.Tests        aturan (mesin status, total penawaran, stok, garansi)
-  NusaServis.Application.Tests   kasus penggunaan dengan repositori palsu
+  Tamirhane.Domain.Tests        aturan (mesin status, total penawaran, stok, garansi)
+  Tamirhane.Application.Tests   kasus penggunaan dengan repositori palsu
   NusaServis.Architecture.Tests  aturan ketergantungan (NetArchTest) + integrasi (WebApplicationFactory + Testcontainers PostgreSQL)
 ```
 
@@ -62,7 +62,7 @@ Saat ini ada 748 test.
 **Aturan ketergantungan:** Domain tidak bergantung pada proyek mana pun dan paket NuGet mana pun. Application hanya bergantung pada Domain; tidak mengenal EF Core, ASP.NET, atau Identity. Infrastructure mengimplementasikan antarmuka di Application. Web mereferensikan Infrastructure hanya di `Program.cs` untuk pendaftaran layanan (composition root). Tes arsitektur menangkap pelanggaran aturan ini bukan saat kompilasi, melainkan saat pengujian:
 - Domain → tidak boleh ada proyek `NusaServis.*` maupun `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore`.
 - Application → tidak boleh ada `Infrastructure`, `Web`, `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore`.
-- Controller tidak menggunakan tipe `NusaServis.Infrastructure`.
+- Controller tidak menggunakan tipe `Tamirhane.Infrastructure`.
 
 **Keputusan:**
 - **Tanpa MediatR:** pada 2025 paket ini beralih ke lisensi komersial. Setiap kasus penggunaan adalah satu kelas (seperti `ReceiveDeviceHandler`), disuntikkan langsung di Web. Validasi ada di dalam kasus penggunaan; tanpa pustaka eksternal.

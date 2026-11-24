@@ -57,17 +57,17 @@ Free repair shop software for phone, computer and appliance repair shops: device
 Clean Architecture: dependencies only point inward.
 
 ```
-NusaServis.Web  ──►  NusaServis.Application  ──►  NusaServis.Domain
+Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
       │                      ▲
-      └──► NusaServis.Infrastructure (only to register services in Program.cs)
+      └──► Tamirhane.Infrastructure (only to register services in Program.cs)
 ```
 
 | Project | Responsibility |
 |---|---|
-| `NusaServis.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
-| `NusaServis.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
-| `NusaServis.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
-| `NusaServis.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
+| `Tamirhane.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
+| `Tamirhane.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
+| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
+| `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
 
 The dependency rule is checked by `NusaServis.Architecture.Tests`. 748 tests run against a real PostgreSQL (Testcontainers/Docker or `TEST_DATABASE_URL`).
 
@@ -97,10 +97,10 @@ cp .env.example .env
 
 ### Option A: Local PostgreSQL (recommended for dev)
 
-Use `src/NusaServis.Web/appsettings.Development.json` default:
+Use `src/Tamirhane.Web/appsettings.Development.json` default:
 
 ```json
-"ConnectionStrings": { "NusaServis": "Host=localhost;Port=5432;Database=NusaServis;Username=NusaServis;Password=NusaServis" }
+"ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
 ```
 
 Windows/Scoop helper:
@@ -119,14 +119,14 @@ Manual commands:
 
 ```sh
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
 ### Option B: Docker PostgreSQL
 
 ```sh
-docker run -d --name NusaServis-db -e POSTGRES_USER=NusaServis -e POSTGRES_PASSWORD=NusaServis -e POSTGRES_DB=NusaServis -p 5433:5432 postgres:17-alpine
+docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
 ```
 
 Set `DATABASE_URL=postgresql://NusaServis:NusaServis@localhost:5433/NusaServis` in `.env` (or use the matching connection string), then run migrations and app.
@@ -139,8 +139,8 @@ Keep Neon credentials in the ignored `.env.neon` (or in real environment variabl
 # .env.neon
 # DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
 $env:DOTENV_FILE="neon"
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
 Without `DOTENV_FILE`, Development keeps reading `.env`. Real environment variables still win over either file.

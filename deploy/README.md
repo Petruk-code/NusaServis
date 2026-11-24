@@ -41,10 +41,10 @@ Bilgisayarda (repo kökünde) Linux ARM için tek klasörlük, .NET kurulumu ger
 kod önceden derlenir, küçük işlemcide ilk açılışlar hızlanır.
 
 ```sh
-dotnet publish src/NusaServis.Web -c Release -r linux-arm64 --self-contained -p:PublishReadyToRun=true -o dist/linux-arm64
+dotnet publish src/Tamirhane.Web -c Release -r linux-arm64 --self-contained -p:PublishReadyToRun=true -o dist/linux-arm64
 tar -czf dist/NusaServis.tar.gz -C dist/linux-arm64 .
 scp dist/NusaServis.tar.gz ubuntu@SUNUCU:/tmp/
-ssh ubuntu@SUNUCU 'sudo rm -rf /opt/NusaServis/* && sudo tar --no-same-owner -xzf /tmp/NusaServis.tar.gz -C /opt/NusaServis && sudo chown -R root:root /opt/NusaServis && sudo chmod 755 /opt/NusaServis/NusaServis.Web && sudo systemctl restart NusaServis'
+ssh ubuntu@SUNUCU 'sudo rm -rf /opt/NusaServis/* && sudo tar --no-same-owner -xzf /tmp/NusaServis.tar.gz -C /opt/NusaServis && sudo chown -R root:root /opt/NusaServis && sudo chmod 755 /opt/NusaServis/Tamirhane.Web && sudo systemctl restart NusaServis'
 ```
 
 Windows'ta paketlenen arşiv dosyaların "çalıştırılabilir" iznini ve sahibini taşımaz: `chmod` olmadan servis

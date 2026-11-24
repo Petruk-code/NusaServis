@@ -57,17 +57,17 @@ Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik ser
 Clean Architecture: bağımlılıklar sadece içe doğru.
 
 ```
-NusaServis.Web  ──►  NusaServis.Application  ──►  NusaServis.Domain
+Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
       │                      ▲
-      └──► NusaServis.Infrastructure (sadece Program.cs'te servis kaydı için)
+      └──► Tamirhane.Infrastructure (sadece Program.cs'te servis kaydı için)
 ```
 
 | Proje | Görevi |
 |---|---|
-| `NusaServis.Domain` | Varlıklar ve iş kuralları: iş emri durum akışı, teklif toplamları, stok, garanti, IMEI kontrolü. Hiçbir çatıya bağlı değil. |
-| `NusaServis.Application` | Kullanım senaryoları (her biri tek sınıf); depolama, e-posta, bildirim, saat ve şifre şifreleme arayüzleri. |
-| `NusaServis.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
-| `NusaServis.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
+| `Tamirhane.Domain` | Varlıklar ve iş kuralları: iş emri durum akışı, teklif toplamları, stok, garanti, IMEI kontrolü. Hiçbir çatıya bağlı değil. |
+| `Tamirhane.Application` | Kullanım senaryoları (her biri tek sınıf); depolama, e-posta, bildirim, saat ve şifre şifreleme arayüzleri. |
+| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
+| `Tamirhane.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
 
 Bağımlılık kuralını `NusaServis.Architecture.Tests` denetler. 748 test gerçek bir PostgreSQL'e karşı çalışır (Testcontainers/Docker veya `TEST_DATABASE_URL`).
 
@@ -90,11 +90,11 @@ Gerekenler: güncel .NET SDK ve Docker (yerel veritabanı ve entegrasyon testler
 ```sh
 git clone https://github.com/MrcDprm/NusaServis-repair-tracker.git
 cd NusaServis-repair-tracker
-docker run -d --name NusaServis-db -e POSTGRES_USER=NusaServis -e POSTGRES_PASSWORD=NusaServis -e POSTGRES_DB=NusaServis -p 5433:5432 postgres:17-alpine
+docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
 cp .env.example .env          # değerler dosyada açıklanıyor; RESEND_API_KEY boşsa e-postalar konsola yazılır
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web --launch-profile https
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web --launch-profile https
 ```
 
 https://localhost:7071 adresini açıp "Demoyu dene"ye bas ya da bir atölye kaydet (doğrulama linki konsolda görünür).

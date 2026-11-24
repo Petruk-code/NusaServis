@@ -1,9 +1,9 @@
 # Pengembangan PostgreSQL lokal (Scoop, Windows)
 
-Repo ini dikonfigurasi untuk PostgreSQL lokal di `src/NusaServis.Web/appsettings.Development.json`:
+Repo ini dikonfigurasi untuk PostgreSQL lokal di `src/Tamirhane.Web/appsettings.Development.json`:
 
 ```json
-"ConnectionStrings": { "NusaServis": "Host=localhost;Port=5432;Database=NusaServis;Username=NusaServis;Password=NusaServis" }
+"ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
 ```
 
 `Program.cs` memuat `.env` pada Development dengan prioritas terendah. Biarkan `DATABASE_URL` tetap dikomentari di `.env` untuk pengembangan lokal; jika diisi, nilainya mengalahkan connection string lokal.
@@ -37,7 +37,7 @@ $env:Path="$env:DOTNET_ROOT;$env:USERPROFILE\.dotnet\tools;$env:Path"
 Jalankan test integrasi terhadap database test yang terpisah:
 
 ```powershell
-$env:TEST_DATABASE_URL="Host=localhost;Port=5432;Database=NusaServis_test;Username=NusaServis;Password=NusaServis"
+$env:TEST_DATABASE_URL="Host=localhost;Port=5432;Database=tamirhane_test;Username=NusaServis;Password=NusaServis"
 dotnet test
 ```
 
@@ -53,8 +53,8 @@ Simpan kredensial Neon di `.env.neon` yang diabaikan Git; jangan salin ke `.env`
 
 ```powershell
 $env:DOTENV_FILE="neon"
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
 Gunakan perintah di atas langsung agar pembantu PostgreSQL lokal tidak ikut berjalan.

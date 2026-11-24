@@ -57,17 +57,17 @@ Perangkat lunak gratis untuk bengkel perbaikan ponsel, komputer, dan perangkat r
 Clean Architecture: ketergantungan hanya mengarah ke dalam.
 
 ```
-NusaServis.Web  ──►  NusaServis.Application  ──►  NusaServis.Domain
+Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
        │                      ▲
-       └──► NusaServis.Infrastructure (hanya untuk mendaftarkan layanan di Program.cs)
+       └──► Tamirhane.Infrastructure (hanya untuk mendaftarkan layanan di Program.cs)
 ```
 
 | Proyek | Tugasnya |
 |---|---|
-| `NusaServis.Domain` | Entitas dan aturan bisnis: alur status pesanan kerja, total penawaran, stok, garansi, pemeriksaan IMEI. Tidak bergantung pada framework apa pun. |
-| `NusaServis.Application` | Kasus penggunaan (masing-masing satu kelas) dan antarmuka untuk penyimpanan, email, notifikasi browser, jam, dan enkripsi kata sandi. |
-| `NusaServis.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, email Resend, Web Push, kode QR, Data Protection. |
-| `NusaServis.Web` | Controller dan view MVC, lokalisasi, header keamanan, pembatasan laju. Server MCP dan endpoint OAuth juga berada di sini sebagai lapisan presentasi kedua yang memanggil kasus penggunaan yang sama. |
+| `Tamirhane.Domain` | Entitas dan aturan bisnis: alur status pesanan kerja, total penawaran, stok, garansi, pemeriksaan IMEI. Tidak bergantung pada framework apa pun. |
+| `Tamirhane.Application` | Kasus penggunaan (masing-masing satu kelas) dan antarmuka untuk penyimpanan, email, notifikasi browser, jam, dan enkripsi kata sandi. |
+| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, email Resend, Web Push, kode QR, Data Protection. |
+| `Tamirhane.Web` | Controller dan view MVC, lokalisasi, header keamanan, pembatasan laju. Server MCP dan endpoint OAuth juga berada di sini sebagai lapisan presentasi kedua yang memanggil kasus penggunaan yang sama. |
 
 Aturan ketergantungan diperiksa oleh `NusaServis.Architecture.Tests`. 748 test dijalankan terhadap PostgreSQL sungguhan (Testcontainers/Docker atau `TEST_DATABASE_URL`).
 
@@ -97,10 +97,10 @@ cp .env.example .env
 
 ### Opsi A: PostgreSQL lokal (disarankan untuk pengembangan)
 
-Gunakan nilai bawaan dari `src/NusaServis.Web/appsettings.Development.json`:
+Gunakan nilai bawaan dari `src/Tamirhane.Web/appsettings.Development.json`:
 
 ```json
-"ConnectionStrings": { "NusaServis": "Host=localhost;Port=5432;Database=NusaServis;Username=NusaServis;Password=NusaServis" }
+"ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
 ```
 
 Pembantu Windows/Scoop:
@@ -119,14 +119,14 @@ Perintah manual:
 
 ```sh
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
 ### Opsi B: PostgreSQL Docker
 
 ```sh
-docker run -d --name NusaServis-db -e POSTGRES_USER=NusaServis -e POSTGRES_PASSWORD=NusaServis -e POSTGRES_DB=NusaServis -p 5433:5432 postgres:17-alpine
+docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
 ```
 
 Isi `DATABASE_URL=postgresql://NusaServis:NusaServis@localhost:5433/NusaServis` di `.env` (atau gunakan connection string yang sesuai), lalu jalankan migrasi dan aplikasi.
@@ -139,8 +139,8 @@ Simpan kredensial Neon di `.env.neon` yang diabaikan Git (atau di variabel lingk
 # .env.neon
 # DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
 $env:DOTENV_FILE="neon"
-dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
-dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
 
 Tanpa `DOTENV_FILE`, Development tetap membaca `.env`. Variabel lingkungan sungguhan tetap menang atas kedua file tersebut.

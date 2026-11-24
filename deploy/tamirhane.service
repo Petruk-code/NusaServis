@@ -1,31 +1,31 @@
-# NusaServis web uygulaması (Oracle Cloud Always Free, Ubuntu). Caddy önde; uygulama sadece 127.0.0.1:8090'da dinler.
-# Kurulum: /etc/systemd/system/NusaServis.service, ayrıntılar deploy/README.md.
+# NusaServis web uygulamasi (Oracle Cloud Always Free, Ubuntu). Caddy �nde; uygulama sadece 127.0.0.1:8090'da dinler.
+# Kurulum: /etc/systemd/system/NusaServis.service, ayrintilar deploy/README.md.
 [Unit]
-Description=NusaServis web uygulaması
+Description=NusaServis web uygulamasi
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=/opt/NusaServis
-ExecStart=/opt/NusaServis/NusaServis.Web
+ExecStart=/opt/NusaServis/Tamirhane.Web
 Restart=always
 RestartSec=5
 
-# Gizli değerler (DATABASE_URL, RESEND_API_KEY, VAPID...) sadece root'un okuyabildiği dosyada; repoda yok.
+# Gizli degerler (DATABASE_URL, RESEND_API_KEY, VAPID...) sadece root'un okuyabildigi dosyada; repoda yok.
 EnvironmentFile=/etc/NusaServis/NusaServis.env
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://127.0.0.1:8090
 Environment=DOTNET_gcServer=0
 Environment=DOTNET_NOLOGO=1
 
-# Data Protection anahtarları (oturum çerezi, cihaz şifresi): /var/lib/NusaServis, sadece servisin kullanıcısı okur.
-# systemd klasörü kendisi açar ve yolunu STATE_DIRECTORY ortam değişkeniyle verir; yeniden başlatmada silinmez.
+# Data Protection anahtarlari (oturum �erezi, cihaz sifresi): /var/lib/NusaServis, sadece servisin kullanicisi okur.
+# systemd klas�r� kendisi a�ar ve yolunu STATE_DIRECTORY ortam degiskeniyle verir; yeniden baslatmada silinmez.
 StateDirectory=NusaServis
 StateDirectoryMode=0700
 
-# Sıkılaştırma: her açılışta geçici bir kullanıcı; dosya sistemi salt okunur (anahtar klasörü hariç), ev klasörleri ve
-# diğer süreçler görünmez. Veri Neon'da.
+# Sikilastirma: her a�ilista ge�ici bir kullanici; dosya sistemi salt okunur (anahtar klas�r� hari�), ev klas�rleri ve
+# diger s�re�ler g�r�nmez. Veri Neon'da.
 DynamicUser=yes
 ProtectSystem=strict
 ProtectHome=yes
@@ -39,7 +39,7 @@ RestrictSUIDSGID=yes
 RestrictNamespaces=yes
 LockPersonality=yes
 CapabilityBoundingSet=
-# Not: MemoryDenyWriteExecute açılmaz; .NET'in JIT derleyicisi çalışma anında kod üretir.
+# Not: MemoryDenyWriteExecute a�ilmaz; .NET'in JIT derleyicisi �alisma aninda kod �retir.
 
 [Install]
 WantedBy=multi-user.target
