@@ -15,9 +15,10 @@ internal sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<T
     public TamirhaneDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<TamirhaneDbContext>();
-        // Önce gerçek ortam değişkeni, sonra repodaki .env (uygulamayla aynı veritabanına bağlansın), sonra yerel varsayılan.
+        // Önce gerçek ortam değişkeni, sonra seçilen env dosyası (DOTENV_FILE=neon .env.neon), sonra yerel varsayılan.
+        var dotEnvOff = Environment.GetEnvironmentVariable("DOTENV") == "off";
         var connection = Environment.GetEnvironmentVariable("DATABASE_URL")
-            ?? DotEnvFile.Read(Directory.GetCurrentDirectory()).GetValueOrDefault("DATABASE_URL")
+            ?? (dotEnvOff ? null : DotEnvFile.Read(Directory.GetCurrentDirectory(), DotEnvFile.ResolveFileName(Environment.GetEnvironmentVariable("DOTENV_FILE"))).GetValueOrDefault("DATABASE_URL"))
             ?? LocalDevelopment;
         DependencyInjection.Configure(options, connection);
         return new TamirhaneDbContext(options.Options, new NoUser());

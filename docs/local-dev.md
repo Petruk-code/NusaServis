@@ -49,4 +49,14 @@ Stop PostgreSQL with:
 
 ## Neon later
 
-Before pushing/testing against Neon, set `DATABASE_URL` in `.env` or pass `TEST_DATABASE_URL` for Docker-gated tests. Do not commit secrets; keep `.env.neon` ignored.
+Keep Neon credentials in the ignored `.env.neon`; do not copy them into `.env`. To use that file for the app, set `DOTENV_FILE=neon` for the current shell:
+
+```powershell
+$env:DOTENV_FILE="neon"
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
+```
+
+Use these directly so the local PostgreSQL helper is not started.
+
+Without `DOTENV_FILE`, Development keeps reading `.env`. Real environment variables still win, and tests use `DOTENV=off` plus `TEST_DATABASE_URL`.

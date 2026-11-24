@@ -25,13 +25,20 @@ using Tamirhane.Web.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Geliştirmede repodaki .env okunur (ortam değişkenlerini her pencerede elle yüklemek gerekmesin). En düşük öncelikle
-// eklenir: appsettings, gerçek ortam değişkenleri ve testlerin verdiği ayarlar her zaman ondan üstündür.
-// Testler DOTENV=off verir; geliştiricinin .env'i test sonuçlarını değiştirmesin.
-if (builder.Environment.IsDevelopment() && builder.Configuration["DOTENV"] != "off")
+// Development repodaki .env'i okur; DOTENV_FILE=neon .env.neon seçer. En düşük öncelikle eklenir:
+// appsettings, gerçek ortam değişkenleri ve test ayarları her zaman üstündür. DOTENV=off ikisini de kapatır.
+if (builder.Configuration["DOTENV"] != "off")
 {
-    var dotEnv = DotEnvFile.Read(builder.Environment.ContentRootPath);
-    builder.Configuration.Sources.Insert(0, new MemoryConfigurationSource { InitialData = dotEnv! });
+    var selected = builder.Configuration["DOTENV_FILE"];
+    if (builder.Environment.IsDevelopment() || !string.IsNullOrWhiteSpace(selected))
+    {
+        var fileName = DotEnvFile.ResolveFileName(selected);
+        var dotEnv = DotEnvFile.Read(builder.Environment.ContentRootPath, fileName);
+        builder.Configuration.Sources.Insert(0, new MemoryConfigurationSource
+        {
+            InitialData = dotEnv.ToDictionary(x => x.Key, x => (string?)x.Value)
+        });
+    }
 }
 
 // Yayında bağlantı DATABASE_URL ortam değişkeninden gelir (Neon); geliştirmede appsettings.Development.json'dan.

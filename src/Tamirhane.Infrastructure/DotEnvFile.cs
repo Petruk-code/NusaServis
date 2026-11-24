@@ -10,14 +10,22 @@ namespace Tamirhane.Infrastructure;
 public static class DotEnvFile
 {
     public const string FileName = ".env";
+    public const string NeonFileName = ".env.neon";
     private const string RepoMarker = "Tamirhane.slnx";
 
-    /// <summary>Başlangıç klasöründen repo köküne kadar ilk .env; yoksa null.</summary>
-    public static string? Find(string startDirectory)
+    public static string ResolveFileName(string? selected) => selected?.Trim().ToLowerInvariant() switch
+    {
+        null or "" => FileName,
+        "neon" or ".env.neon" => NeonFileName,
+        _ => throw new InvalidOperationException("DOTENV_FILE yalnızca 'neon' ya da '.env.neon' olabilir.")
+    };
+
+    /// <summary>Başlangıç klasöründen repo köküne kadar istenen env dosyası; yoksa null.</summary>
+    public static string? Find(string startDirectory, string fileName = FileName)
     {
         for (var dir = new DirectoryInfo(startDirectory); dir is not null; dir = dir.Parent)
         {
-            var candidate = Path.Combine(dir.FullName, FileName);
+            var candidate = Path.Combine(dir.FullName, fileName);
             if (File.Exists(candidate))
                 return candidate;
             if (File.Exists(Path.Combine(dir.FullName, RepoMarker)))
@@ -26,9 +34,9 @@ public static class DotEnvFile
         return null;
     }
 
-    /// <summary>Bulunan .env'in değerleri; dosya yoksa boş.</summary>
-    public static IReadOnlyDictionary<string, string> Read(string startDirectory) =>
-        Find(startDirectory) is { } path ? Parse(File.ReadAllText(path)) : new Dictionary<string, string>();
+    /// <summary>Bulunan env dosyasının değerleri; dosya yoksa boş.</summary>
+    public static IReadOnlyDictionary<string, string> Read(string startDirectory, string fileName = FileName) =>
+        Find(startDirectory, fileName) is { } path ? Parse(File.ReadAllText(path)) : new Dictionary<string, string>();
 
     /// <summary>
     /// ANAHTAR=değer satırları. Boş satır ve # ile başlayan yorum atlanır; "export " öneki kabul edilir; değer

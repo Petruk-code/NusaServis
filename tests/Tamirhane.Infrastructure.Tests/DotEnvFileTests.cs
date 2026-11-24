@@ -74,6 +74,30 @@ public sealed class DotEnvFileTests : IDisposable
     }
 
     [Fact]
+    public void Named_neon_file_is_read_instead_of_the_default_env()
+    {
+        var repo = Repo();
+        File.WriteAllText(Path.Combine(repo.FullName, ".env"), "DATABASE_URL=local");
+        File.WriteAllText(Path.Combine(repo.FullName, ".env.neon"), "DATABASE_URL=neon");
+        var web = repo.CreateSubdirectory(Path.Combine("src", "Tamirhane.Web"));
+
+        Assert.Equal("local", DotEnvFile.Read(web.FullName)["DATABASE_URL"]);
+        Assert.Equal("neon", DotEnvFile.Read(web.FullName, DotEnvFile.NeonFileName)["DATABASE_URL"]);
+    }
+
+    [Theory]
+    [InlineData(null, ".env")]
+    [InlineData("", ".env")]
+    [InlineData("neon", ".env.neon")]
+    [InlineData(".env.neon", ".env.neon")]
+    public void Selected_env_file_name_is_resolved(string? selected, string expected) =>
+        Assert.Equal(expected, DotEnvFile.ResolveFileName(selected));
+
+    [Fact]
+    public void Unknown_selected_env_file_name_is_rejected() =>
+        Assert.Throws<InvalidOperationException>(() => DotEnvFile.ResolveFileName("production"));
+
+    [Fact]
     public void A_file_above_the_repo_root_is_not_used()
     {
         File.WriteAllText(Path.Combine(_root.FullName, ".env"), "DATABASE_URL=baska-proje");

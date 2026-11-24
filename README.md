@@ -133,14 +133,17 @@ Set `DATABASE_URL=postgresql://tamirhane:tamirhane@localhost:5433/tamirhane` in 
 
 ### Option C: Neon PostgreSQL
 
-Set `DATABASE_URL` to your Neon connection string in `.env` (do not commit it). `postgresql://`/`postgres://` URLs are supported; `sslmode=require` is accepted. For safety, keep Neon credentials in `.env.neon` or environment variables and only copy when needed.
+Keep Neon credentials in the ignored `.env.neon` (or in real environment variables); do not copy them into `.env`. `postgresql://`/`postgres://` URLs are supported; `sslmode=require` is accepted.
 
-```sh
-# .env
-DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
+```powershell
+# .env.neon
+# DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
+$env:DOTENV_FILE="neon"
 dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
 dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
 ```
+
+Without `DOTENV_FILE`, Development keeps reading `.env`. Real environment variables still win over either file.
 
 Open https://localhost:7071 (or the URL shown by `dotnet run`) and press "Try the demo", or register a shop (the verification link appears in the console when `RESEND_API_KEY` is empty).
 
