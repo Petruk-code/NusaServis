@@ -1,10 +1,10 @@
-English | [Türkçe](README.tr.md)
+[Bahasa Indonesia](README.id.md) | English | [Türkçe](README.tr.md)
 
 # Tamirhane
 
 Free repair shop software for phone, computer and appliance repair shops: device check-in with a printable receipt, work orders, quotes the customer approves from a tracking link, parts stock, payments and warranty. Customers follow their repair on their phone without an account. Built with ASP.NET Core MVC on Clean Architecture.
 
-**Live:** [tamirhane.miracdeprem.com](https://tamirhane.miracdeprem.com) · try the demo shop without signing up ([English](https://tamirhane.miracdeprem.com/en/))
+**Live:** [tamirhane.miracdeprem.com](https://tamirhane.miracdeprem.com) · try the demo shop without signing up ([Bahasa Indonesia](https://tamirhane.miracdeprem.com/) · [English](https://tamirhane.miracdeprem.com/en/))
 
 ## Features
 
@@ -28,7 +28,7 @@ Free repair shop software for phone, computer and appliance repair shops: device
 **Shop**
 - Dashboard: awaiting approval, in repair, ready, waiting over 30 days, monthly revenue, low stock
 - Multi-tenant: every shop's data is isolated; branches, owner and technician roles, staff invited by email
-- Turkish and English (English under `/en`), light and dark theme, works on a phone at the counter
+- Indonesian (default) and English (under `/en`); Turkish resources remain for old data, light and dark theme, works on a phone at the counter
 - Public demo shop with sample data, deleted after 24 hours; the owner can delete the shop and all its data
 
 **AI assistant (MCP)**
@@ -69,7 +69,7 @@ Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
 | `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
 | `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
 
-The dependency rule is checked by `Tamirhane.Architecture.Tests`. 744 tests run against a real PostgreSQL in Docker (Testcontainers).
+The dependency rule is checked by `Tamirhane.Architecture.Tests`. 748 tests run against a real PostgreSQL (Testcontainers/Docker or `TEST_DATABASE_URL`).
 
 Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a test walks all POST endpoints), per-IP rate limits, `__Host-` cookies, tenant filter on every query, passwords hashed by Identity, Data Protection keys on the server's disk, encrypted device passcodes, TLS-verified database connection.
 

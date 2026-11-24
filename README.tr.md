@@ -1,10 +1,10 @@
-[English](README.md) | Türkçe
+[English](README.md) | [Bahasa Indonesia](README.id.md) | Türkçe
 
 # Tamirhane
 
 Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik servis ve tamir takip programı: yazdırılabilir fişle cihaz kabulü, iş emri, müşterinin takip linkinden onayladığı teklif, parça stoku, tahsilat ve garanti. Müşteri cihazının durumunu hesap açmadan telefonundan takip eder. ASP.NET Core MVC ve Clean Architecture ile yazıldı.
 
-**Canlı:** [tamirhane.miracdeprem.com](https://tamirhane.miracdeprem.com) · kayıt olmadan demo atölyeyi dene ([English](https://tamirhane.miracdeprem.com/en/))
+**Canlı:** [tamirhane.miracdeprem.com](https://tamirhane.miracdeprem.com) · kayıt olmadan demo atölyeyi dene ([Bahasa Indonesia](https://tamirhane.miracdeprem.com/) · [English](https://tamirhane.miracdeprem.com/en/))
 
 ## Özellikler
 
@@ -28,7 +28,7 @@ Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik ser
 **Atölye**
 - Panel: onay bekleyenler, onarımdakiler, teslime hazırlar, 30 günü geçenler, aylık ciro, kritik stok
 - Çok kiracılı: her atölyenin verisi ayrı; şubeler, sahip ve teknisyen rolleri, e-postayla personel daveti
-- Türkçe ve İngilizce (İngilizce `/en` altında), açık ve koyu tema, tezgâhta telefondan kullanılabilir
+- Endonezce (varsayılan) ve İngilizce (`/en` altında); eski veriler için Türkçe kaynaklar korunur, açık ve koyu tema, tezgâhta telefondan kullanılabilir
 - Örnek verili, 24 saat sonra silinen herkese açık demo atölye; sahip atölyeyi bütün verisiyle silebilir
 
 **Yapay zekâ asistanı (MCP)**
@@ -69,7 +69,7 @@ Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
 | `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
 | `Tamirhane.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
 
-Bağımlılık kuralını `Tamirhane.Architecture.Tests` denetler. 744 test Docker'daki gerçek bir PostgreSQL'e karşı çalışır (Testcontainers).
+Bağımlılık kuralını `Tamirhane.Architecture.Tests` denetler. 748 test gerçek bir PostgreSQL'e karşı çalışır (Testcontainers/Docker veya `TEST_DATABASE_URL`).
 
 Kısaca güvenlik: Trusted Types'lı sıkı CSP, her POST'ta CSRF token'ı (bir test bütün POST uçlarını gezer), IP başına istek sınırı, `__Host-` çerezler, her sorguda kiracı filtresi, Identity ile hash'lenmiş şifreler, sunucu diskinde Data Protection anahtarları, şifreli cihaz şifreleri, sertifikası doğrulanan veritabanı bağlantısı.
 
