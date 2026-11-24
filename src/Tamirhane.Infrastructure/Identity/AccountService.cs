@@ -186,7 +186,7 @@ internal sealed class AccountService(
         await db.Staff.IgnoreQueryFilters()
             .Where(s => s.UserId == userId)
             .Join(db.Shops.IgnoreQueryFilters(), s => s.ShopId, shop => shop.Id, (_, shop) => shop.Locale)
-            .FirstOrDefaultAsync(ct) ?? "tr";
+            .FirstOrDefaultAsync(ct) ?? "id";
 
     private static Error MapError(IdentityResult result)
     {

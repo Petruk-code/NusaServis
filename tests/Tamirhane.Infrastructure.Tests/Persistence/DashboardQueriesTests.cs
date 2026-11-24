@@ -9,7 +9,7 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class DashboardQueriesTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 12, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 12, 0, 0, TimeSpan.FromHours(7));
     private static readonly Guid Staff = Guid.NewGuid();
 
     [DockerFact]
@@ -36,7 +36,7 @@ public sealed class DashboardQueriesTests(PostgresFixture db)
     public async Task Revenue_is_payments_minus_refunds_within_the_month_of_this_shop_only()
     {
         var shopId = Guid.NewGuid();
-        var monthStart = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.FromHours(3));
+        var monthStart = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.FromHours(7));
         await SeedAsync(shopId, Now, o =>
         {
             Quoted(o);

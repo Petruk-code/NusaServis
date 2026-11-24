@@ -5,7 +5,7 @@ namespace Tamirhane.Domain.Tests.Shops;
 
 public class InvitationTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(7));
     private static readonly Guid ShopId = Guid.NewGuid();
 
     private static (Invitation Invitation, string Token) Invite(string email = "mehmet@example.com") =>

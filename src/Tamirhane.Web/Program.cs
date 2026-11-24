@@ -154,14 +154,13 @@ app.Use((context, next) =>
 
 // Sağlık kontrolü sunucunun içinden, Caddy'siz http ile de sorulabilir; https'e yönlendirilmez.
 app.UseWhen(context => !context.Request.Path.StartsWithSegments("/healthz"), branch => branch.UseHttpsRedirection());
-// Tarih ve sayı biçimi sunucunun işletim sistemine bağlı kalmasın (yayındaki Linux konteyneri kültürsüz çalışır):
-// arayüz Türkçe ya da İngilizce (#35), kültürler AppCultures'ta.
+// Format tanggal/angka tidak bergantung OS. UI: Indonesia (default) dan Inggris.
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
-    DefaultRequestCulture = new RequestCulture(AppCultures.Turkish),
+    DefaultRequestCulture = new RequestCulture(AppCultures.Indonesian),
     SupportedCultures = [.. AppCultures.All],
     SupportedUICultures = [.. AppCultures.All],
-    // Dil adresten: /en İngilizce, önsüz Türkçe. Kişinin seçimi (çerez) önsüz adresi /en'e yönlendirerek uygulanır.
+    // Bahasa dari URL: /en Inggris, tanpa prefix Indonesia. Cookie mengarahkan tanpa prefix ke /en bila dipilih.
     RequestCultureProviders = [new LanguagePrefix.Provider()],
     ApplyCurrentCultureToResponseHeaders = true, // Content-Language
 });

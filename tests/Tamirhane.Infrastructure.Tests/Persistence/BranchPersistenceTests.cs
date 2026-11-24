@@ -76,7 +76,7 @@ public sealed class BranchPersistenceTests(PostgresFixture db)
         }
 
         using var check = db.AsShop(shop.ShopId);
-        Assert.Equal(new ShopSettings(180, 10m), await check.Get<IShopSettings>().GetAsync(shop.ShopId, default));
+        Assert.Equal(new ShopSettings(180, 10m, "tr"), await check.Get<IShopSettings>().GetAsync(shop.ShopId, default));
     }
 
     private sealed record RegisteredShop(Guid ShopId, Guid OwnerStaffId, Guid BranchId);

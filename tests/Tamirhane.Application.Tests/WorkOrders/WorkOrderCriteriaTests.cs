@@ -35,12 +35,12 @@ public class WorkOrderCriteriaTests
     }
 
     [Theory]
-    [InlineData("0532 123 45 67")]
-    [InlineData("+90 532 123 4567")]
-    [InlineData("5321234567")]
+    [InlineData("0812 3456 7890")]
+    [InlineData("+62 812 3456 7890")]
+    [InlineData("81234567890")]
     public void Phone_in_any_writing_is_found(string query)
     {
-        Assert.Equal("+905321234567", WorkOrderCriteria.Parse(query)!.Phone!.Value);
+        Assert.Equal("+6281234567890", WorkOrderCriteria.Parse(query)!.Phone!.Value);
     }
 
     [Fact]

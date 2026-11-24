@@ -3,7 +3,7 @@ using static Tamirhane.Web.Tests.ShopFlows;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Panel (#33) HTTP üzerinden: sayılar listeyi süzer, en uzun bekleyenler, ciro sadece sahibe.</summary>
+/// <summary>Panel (#33) HTTP Ã¼zerinden: sayÄ±lar listeyi sÃ¼zer, en uzun bekleyenler, ciro sadece sahibe.</summary>
 [Collection(WebCollection.Name)]
 public sealed class PanelFlowTests(TamirhaneWebFactory app)
 {
@@ -16,7 +16,7 @@ public sealed class PanelFlowTests(TamirhaneWebFactory app)
 
         var page = await BodyAsync(owner, "/panel");
 
-        Assert.Contains("Tezgâhta açık iş yok", page);
+        Assert.Contains("Belum ada order servis", page);
         Assert.Contains("href=\"/work-orders?filter=AwaitingApproval\"", page);
         Assert.Contains("<strong>0</strong>", page);
     }
@@ -25,17 +25,17 @@ public sealed class PanelFlowTests(TamirhaneWebFactory app)
     public async Task Counts_link_to_the_filtered_list_and_open_work_is_listed()
     {
         var owner = await _flows.OwnerAsync("panel-sayi@example.com");
-        var order = await ReceiveAsync(owner, "0532 911 01 01");
+        var order = await ReceiveAsync(owner, "0812 3456 7890");
         await owner.SubmitAsync(order, order + "/steps", new() { ["Step"] = "StartDiagnosis" });
         await owner.SubmitAsync(order, order + "/steps", new() { ["Step"] = "StartRepair" });
 
         var page = await BodyAsync(owner, "/panel");
 
-        Assert.DoesNotContain("Tezgâhta açık iş yok", page);
+        Assert.DoesNotContain("Belum ada order servis", page);
         Assert.Contains("href=\"/work-orders?filter=InRepair\"", page);
-        Assert.Matches(@"<strong>1</strong>\s*<span>Onarımda</span>", page);
+        Assert.Matches(@"<strong>1</strong>\s*<span>Dalam perbaikan</span>", page);
         Assert.Contains($"href=\"{order}\"", page); // en uzun bekleyenlerde
-        Assert.Contains("Tüm açık işler (1)", page);
+        Assert.Contains("Semua order terbuka (1)", page);
 
         var list = await owner.GetAsync("/work-orders?filter=InRepair");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
@@ -48,12 +48,12 @@ public sealed class PanelFlowTests(TamirhaneWebFactory app)
         var owner = await _flows.OwnerAsync("panel-ciro@example.com");
         var technician = await _flows.TechnicianAsync(owner, "panel-teknisyen@example.com");
 
-        Assert.Contains("Bu ay ciro", await BodyAsync(owner, "/panel"));
+        Assert.Contains("Pendapatan", await BodyAsync(owner, "/panel"));
 
         var page = await BodyAsync(technician, "/panel");
-        Assert.DoesNotContain("Bu ay ciro", page);
-        Assert.DoesNotContain("Geçen ay", page);
-        Assert.Contains("Onay bekliyor", page); // sayıları teknisyen de görür
+        Assert.DoesNotContain("Pendapatan", page);
+        Assert.DoesNotContain("Bulan lalu", page);
+        Assert.Contains("Menunggu persetujuan", page); // sayÄ±larÄ± teknisyen de gÃ¶rÃ¼r
     }
 
     [DockerFact]

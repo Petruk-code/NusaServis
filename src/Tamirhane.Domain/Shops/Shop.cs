@@ -13,15 +13,15 @@ public sealed class Shop : Entity
     public const decimal DefaultVat = 20m;
     /// <summary>İş emrindeki garanti üst sınırıyla aynı (10 yıl).</summary>
     public const int MaxWarrantyDays = 3650;
-    public static readonly IReadOnlyList<string> Locales = ["tr", "en"];
+    public static readonly IReadOnlyList<string> Locales = ["id", "en", "tr"];
 
     private Shop() { }
 
     public string Name { get; private set; } = "";
     public int WarrantyDays { get; private set; }
     public decimal DefaultVatRate { get; private set; }
-    /// <summary>Müşteriye giden e-postaların ve takip sayfasının varsayılan dili.</summary>
-    public string Locale { get; private set; } = "tr";
+    /// <summary>Bahasa default untuk email/pelacakan pelanggan.</summary>
+    public string Locale { get; private set; } = "id";
     public DateTimeOffset CreatedAt { get; private set; }
     /// <summary>
     /// Herkese açık demo (#36): ziyaretçiye özel açılır, <see cref="DemoLifetime"/> sonra silinir, dışarıya e-posta göndermez.

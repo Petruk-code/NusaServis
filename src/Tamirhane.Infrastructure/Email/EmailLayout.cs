@@ -26,9 +26,13 @@ public static class EmailLayout
         string to, string locale, string subject, IReadOnlyList<string> paragraphs, EmailAction? action, string footer,
         string? fromName = null)
     {
-        var lang = locale == "en" ? "en" : "tr";
-        var sentBy = lang == "en" ? "Sent by Tamirhane, repair shop management." : "Bu e-posta Tamirhane servis takip sistemiyle gönderildi.";
-        var buttonHelp = lang == "en" ? "If the button does not work, copy this link into your browser:" : "Düğme çalışmazsa bu linki tarayıcına yapıştır:";
+        var lang = locale == "en" ? "en" : "id";
+        var sentBy = lang == "en"
+            ? "Sent by Tamirhane, repair shop management."
+            : "Email ini dikirim oleh sistem pelacakan servis Tamirhane.";
+        var buttonHelp = lang == "en"
+            ? "If the button does not work, copy this link into your browser:"
+            : "Jika tombol tidak berfungsi, salin tautan ini ke browser Anda:";
 
         return new EmailMessage(to, subject, Text(paragraphs, action, footer), Html(lang, subject, paragraphs, action, footer, sentBy, buttonHelp), fromName);
     }

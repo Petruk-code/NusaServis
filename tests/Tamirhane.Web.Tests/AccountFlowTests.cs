@@ -12,7 +12,7 @@ namespace Tamirhane.Web.Tests;
 public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
 {
     private const string Password = "kirmizi-kalem-42";
-    private const string InvalidLogin = "E-posta ya da şifre hatalı.";
+    private const string InvalidLogin = "Email atau kata sandi salah.";
 
     [DockerFact]
     public async Task Owner_registers_confirms_the_email_and_reaches_the_panel()
@@ -23,7 +23,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         Assert.Equal("/account/check-email", Browser.RedirectOf(registered));
 
         var confirmed = await (await browser.GetAsync(ConfirmationLink("sahip@example.com"))).Content.ReadAsStringAsync();
-        Assert.Contains("E-posta doğrulandı", confirmed);
+        Assert.Contains("Email terkonfirmasi", confirmed);
 
         Assert.Equal("/panel", Browser.RedirectOf(await LoginAsync(browser, "sahip@example.com", Password)));
         var panel = await browser.GetAsync("/panel");
@@ -40,7 +40,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         var login = await LoginAsync(browser, "dogrulanmamis@example.com", Password);
 
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        Assert.Contains("henüz doğrulanmadı", await login.Content.ReadAsStringAsync());
+        Assert.Contains("belum terkonfirmasi", await login.Content.ReadAsStringAsync());
         Assert.StartsWith("/account/login", Browser.RedirectOf(await browser.GetAsync("/panel")));
     }
 
@@ -54,7 +54,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         Assert.Equal("/account/check-email", Browser.RedirectOf(again));
         var mails = app.Emails.SentTo("kayitli@example.com");
         Assert.Equal(2, mails.Count);
-        Assert.Contains(mails, m => m.Subject.Contains("zaten bir Tamirhane hesabın var"));
+        Assert.Contains(mails, m => m.Subject.Contains("sudah terdaftar di Tamirhane"));
     }
 
     [DockerFact]
@@ -63,7 +63,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         var response = await RegisterAsync(app.NewBrowser(), "zayif@example.com", "password123");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("sızıntı listelerinde çok sık geçiyor", await response.Content.ReadAsStringAsync());
+        Assert.Contains("Kata sandi terlalu umum.", await response.Content.ReadAsStringAsync());
         Assert.Empty(app.Emails.SentTo("zayif@example.com"));
     }
 
@@ -154,7 +154,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         var page = await app.NewBrowser().GetAsync($"/account/confirm-email?userId={Guid.NewGuid()}&token=bozuk");
 
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
-        Assert.Contains("Yeni link iste", await page.Content.ReadAsStringAsync());
+        Assert.Contains("Minta tautan konfirmasi baru", await page.Content.ReadAsStringAsync());
     }
 
     [DockerFact]
@@ -208,18 +208,18 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         await ResetPasswordAsync(browser, "iki-kez@example.com", "yeni-mavi-kalem-7");
         var reused = await BodyOf(ResetPasswordAsync(browser, "iki-kez@example.com", "baska-yesil-kalem-9"));
 
-        Assert.Contains("İki şifre aynı değil.", mismatch);
-        Assert.Contains("Bu sıfırlama linki geçersiz", reused);
+        Assert.Contains("Kata sandi tidak sama.", mismatch);
+        Assert.Contains("Tautan reset tidak valid", reused);
     }
 
     private static Task<HttpResponseMessage> RegisterAsync(Browser browser, string email, string password = Password) =>
         browser.SubmitAsync("/account/register", "/account/register", new()
         {
-            ["ShopName"] = "Kaya Telefon",
+            ["ShopName"] = "Bengkel Jaya",
             ["OwnerName"] = "Ayşe Kaya",
             ["Email"] = email,
             ["Password"] = password,
-            ["Locale"] = "tr",
+            ["Locale"] = "id",
         });
 
     private static Task<HttpResponseMessage> LoginAsync(Browser browser, string email, string password, string? returnUrl = null)
@@ -241,8 +241,11 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
     /// <summary>Adrese giden, verilen sayfaya işaret eden son linkin yolu ve sorgusu (adresin başı PUBLIC_ORIGIN).</summary>
     private string LinkIn(string email, string path)
     {
-        var mail = app.Emails.SentTo(email).Last(m => m.Text.Contains(path));
-        return new Uri(LinkPattern().Matches(mail.Text).Single(m => m.Value.Contains(path)).Value).PathAndQuery;
+        var mails = app.Emails.SentTo(email);
+        var mail = mails.LastOrDefault(m => (m.Text + "\n" + m.Html).Contains(path, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"No mail to {email} contains {path}. Got: {string.Join(" | ", mails.Select(m => m.Subject + " :: " + m.Text))}");
+        var body = mail.Text.Contains(path, StringComparison.OrdinalIgnoreCase) ? mail.Text : WebUtility.HtmlDecode(mail.Html);
+        return new Uri(LinkPattern().Matches(body).Last(m => m.Value.Contains(path, StringComparison.OrdinalIgnoreCase)).Value).PathAndQuery;
     }
 
     /// <summary>E-postadaki sıfırlama linkini açar ve yeni şifre formunu gönderir; gizli alanlar linkten gelir.</summary>

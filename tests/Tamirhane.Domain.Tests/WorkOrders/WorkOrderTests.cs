@@ -6,7 +6,7 @@ namespace Tamirhane.Domain.Tests.WorkOrders;
 public class WorkOrderTests
 {
     private static readonly Guid Staff = Guid.NewGuid();
-    private static readonly DateTimeOffset Start = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Start = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(7));
 
     private static WorkOrder NewOrder(string complaint = "Ekran kırık", string? passcode = "1234") =>
         WorkOrder.Receive(Guid.NewGuid(), Guid.NewGuid(), "2026-0001", "ABCDEFGH2345",

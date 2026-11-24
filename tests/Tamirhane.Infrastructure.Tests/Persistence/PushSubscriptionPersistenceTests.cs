@@ -10,7 +10,7 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class PushSubscriptionPersistenceTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(7));
     private const string Endpoint = "https://fcm.googleapis.com/fcm/send/kalici";
 
     [DockerFact]

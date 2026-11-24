@@ -3,7 +3,7 @@
 @using Tamirhane.Domain.WorkOrders
 @model WorkOrderView
 @{
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
     var isOwner = User.IsInRole("Owner");
     var declined = Model.QuoteDecision?.Kind == QuoteDecisionKind.Declined;
     string Method(PaymentMethod m) => m switch
@@ -93,7 +93,7 @@
                         <strong class="@(p.Kind == PaymentKind.Refund ? "change-minus" : "")">@(p.Kind == PaymentKind.Refund ? "−" : "")@p.Amount.ToString("C")</strong>
                         @Describe(p)
                     </span>
-                    <span class="muted">@p.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @p.By</span>
+                    <span class="muted">@p.At.ToOffset(wib).ToString("d MMMM HH:mm"), @p.By</span>
                 </li>
             }
         </ul>

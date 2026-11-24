@@ -100,7 +100,7 @@ public sealed partial class SecurityTests(TamirhaneWebFactory app)
         var html = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Contains("<h1>Sayfa bulunamadı</h1>", html);
+        Assert.Contains("<h1>Halaman tidak ditemukan</h1>", html);
         Assert.Contains("href=\"/\"", html);
         Assert.DoesNotContain("İstek numarası", html);
     }

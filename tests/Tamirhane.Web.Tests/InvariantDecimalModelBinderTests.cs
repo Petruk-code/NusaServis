@@ -5,7 +5,7 @@ using Tamirhane.Web.ModelBinding;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Ondalık alanlar sayfanın kültürü Türkçe olsa da noktalı ve virgüllü yazımı aynı okur. Docker gerekmez.</summary>
+/// <summary>OndalÄ±k alanlar sayfanÄ±n kÃ¼ltÃ¼rÃ¼ TÃ¼rkÃ§e olsa da noktalÄ± ve virgÃ¼llÃ¼ yazÄ±mÄ± aynÄ± okur. Docker gerekmez.</summary>
 public sealed class InvariantDecimalModelBinderTests
 {
     [Theory]
@@ -13,7 +13,7 @@ public sealed class InvariantDecimalModelBinderTests
     [InlineData("10,5", 10.5)]
     [InlineData(" 20 ", 20)]
     [InlineData("-1", -1)]
-    [InlineData("20.125", 20.125)] // iki ondalık kuralı domain'de; burada sadece okunur
+    [InlineData("20.125", 20.125)] // iki ondalÄ±k kuralÄ± domain'de; burada sadece okunur
     public async Task Dot_and_comma_are_both_decimal_separators(string text, double expected)
     {
         var (context, _) = await BindAsync(text, typeof(decimal));
@@ -23,7 +23,7 @@ public sealed class InvariantDecimalModelBinderTests
     }
 
     [Theory]
-    [InlineData("1.500,5")] // binlik ayırıcı: "1.500" mü "1,5" mi belli değil
+    [InlineData("1.500,5")] // binlik ayÄ±rÄ±cÄ±: "1.500" mÃ¼ "1,5" mi belli deÄŸil
     [InlineData("abc")]
     [InlineData("1e3")]
     public async Task Ambiguous_or_non_numeric_text_is_an_error(string text)
@@ -47,7 +47,7 @@ public sealed class InvariantDecimalModelBinderTests
     private static async Task<(DefaultModelBindingContext Context, ModelStateDictionary State)> BindAsync(string text, Type type)
     {
         var previous = CultureInfo.CurrentCulture;
-        CultureInfo.CurrentCulture = new CultureInfo("tr-TR"); // sayfanın kültürü Türkçe olsa bile
+        CultureInfo.CurrentCulture = new CultureInfo("id-ID"); // sayfanÄ±n kÃ¼ltÃ¼rÃ¼ TÃ¼rkÃ§e olsa bile
         try
         {
             var state = new ModelStateDictionary();

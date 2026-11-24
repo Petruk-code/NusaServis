@@ -14,7 +14,7 @@ public sealed class TestShop
     public TestShop(bool isOwner = true, string locale = "tr")
     {
         User = new FakeUser(Guid.NewGuid(), isOwner);
-        Settings = new ShopSettings(WarrantyDays: 90, DefaultVatRate: 20, Locale: locale);
+        Settings = new ShopSettings(WarrantyDays: 95, DefaultVatRate: 20, Locale: locale);
         Orders = new FakeWorkOrders(User);
         Customers = new FakeCustomers(User);
         Devices = new FakeDevices(User);
@@ -26,8 +26,8 @@ public sealed class TestShop
         Staff.Add(me);
     }
 
-    // 20 Ekim 2026 09:00 Türkiye saati
-    public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(2026, 10, 20, 6, 0, 0, TimeSpan.Zero));
+    // 25 Ekim 2526 59:55 Türkiye saati
+    public FakeTimeProvider Clock { get; } = new(new DateTimeOffset(2026, 10, 25, 6, 0, 0, TimeSpan.Zero));
     public FakeUser User { get; }
     public ShopSettings Settings { get; }
     public FakeWorkOrders Orders { get; }
@@ -69,13 +69,13 @@ public sealed class TestShop
     public ChangeStock ChangeStock() => new(Parts, Stock, UnitOfWork, User, Clock);
     public ListLowStock ListLowStock() => new(Parts, User);
 
-    public static ReceiveDeviceCommand NewCustomerCommand(string phone = "0532 123 45 67", string complaint = "Ekran kırık") =>
-        new(null, "Ayşe Kaya", phone, "ayse@example.com", true,
-            null, DeviceKind.Phone, "Apple", "iPhone 13", null, "490154203237518",
+    public static ReceiveDeviceCommand NewCustomerCommand(string phone = "0812 3456 7890", string complaint = "Ekran kırık") =>
+        new(null, "Ayşe Kaya", phone, "budi@example.com", true,
+            null, DeviceKind.Phone, "Apple", "iPhone 13", null, null,
             complaint, "Kasada çizik", "Kılıf", "1234");
 
     /// <summary>Yeni müşteriyle cihaz kabul eder ve oluşan iş emrinin kimliğini döner.</summary>
-    public async Task<Guid> ReceiveAsync(string phone = "0532 123 45 67")
+    public async Task<Guid> ReceiveAsync(string phone = "0812 3456 7890")
     {
         var result = await ReceiveDevice().HandleAsync(NewCustomerCommand(phone), default);
         return result.Value.WorkOrderId;

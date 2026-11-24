@@ -14,7 +14,7 @@ public sealed record PartList(IReadOnlyList<PartRow> Parts, int ActiveCount, int
 /// <summary>Stok sayfası: arama (kod ya da ad, Türkçe harf duyarsız), sadece kritik stok, kullanımdan kalkanlar.</summary>
 public sealed class ListParts(IPartRepository parts, ICurrentUser user)
 {
-    private static readonly CompareInfo Turkish = CultureInfo.GetCultureInfo("tr-TR").CompareInfo;
+    private static readonly CompareInfo Local = CultureInfo.GetCultureInfo("id-ID").CompareInfo;
 
     public async Task<PartList> HandleAsync(string? query, bool lowOnly, bool includeInactive, CancellationToken ct)
     {
@@ -28,7 +28,7 @@ public sealed class ListParts(IPartRepository parts, ICurrentUser user)
             .Where(p => string.IsNullOrEmpty(query) || Contains(p.Part.Sku, query) || Contains(p.Part.Name, query))
             // Kritik stoktakiler önce, sonra ada göre.
             .OrderByDescending(p => p.Part.IsActive && p.Part.IsLow(p.Quantity))
-            .ThenBy(p => p.Part.Name, StringComparer.Create(CultureInfo.GetCultureInfo("tr-TR"), ignoreCase: true))
+            .ThenBy(p => p.Part.Name, StringComparer.Create(CultureInfo.GetCultureInfo("id-ID"), ignoreCase: true))
             .Select(p => Row(p, user.IsOwner))
             .ToList();
         return new PartList(rows, active.Count, active.Count(p => p.Part.IsLow(p.Quantity)));
@@ -37,7 +37,7 @@ public sealed class ListParts(IPartRepository parts, ICurrentUser user)
     // Türkçede "i"nin büyüğü "İ": sadece Türkçe kurala bakılsa "ip13" araması "IP13-SCR" kodunu bulamazdı.
     // Kodlar İngilizce harfli, adlar Türkçe; iki kuraldan biri tutarsa eşleşir.
     private static bool Contains(string text, string query) =>
-        Turkish.IndexOf(text, query, CompareOptions.IgnoreCase) >= 0
+        Local.IndexOf(text, query, CompareOptions.IgnoreCase) >= 0
         || CultureInfo.InvariantCulture.CompareInfo.IndexOf(text, query, CompareOptions.IgnoreCase) >= 0;
 
     internal static PartRow Row(PartStock p, bool isOwner) => new(

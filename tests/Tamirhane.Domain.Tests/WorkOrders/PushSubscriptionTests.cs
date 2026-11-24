@@ -9,7 +9,7 @@ namespace Tamirhane.Domain.Tests.WorkOrders;
 public class PushSubscriptionTests
 {
     private static readonly Guid Staff = Guid.NewGuid();
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 12, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 12, 0, 0, TimeSpan.FromHours(7));
     private const string Fcm = "https://fcm.googleapis.com/fcm/send/abc123";
 
     private static readonly string P256dh = PublicKey();

@@ -23,7 +23,7 @@ public sealed class ShopSettingsInput
 
     [Display(Name = "field.customer_language")]
     [Required(ErrorMessage = "error.locale")]
-    public string Locale { get; set; } = "tr";
+    public string Locale { get; set; } = "id";
 }
 
 public sealed class BranchInput

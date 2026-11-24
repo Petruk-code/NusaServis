@@ -1,0 +1,58 @@
+﻿@* Kebijakan privasi / pelindungan data pribadi (adaptasi praktis untuk konteks Indonesia). *@
+<p>Pemberitahuan ini menjelaskan bagaimana Tamirhane memproses data pribadi bengkel, staf, dan pelanggan yang menitipkan perangkat untuk perbaikan. Penyesuaian ini adalah adaptasi praktis istilah regulasi dalam perangkat lunak agar relevan dengan konteks Indonesia, dan bukan merupakan konsultasi hukum resmi.</p>
+
+<h2>Siapa yang bertanggung jawab?</h2>
+<p>Tamirhane dikelola oleh Miraç Deprem (perorangan). Kontak: <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a>.</p>
+<ul>
+    <li><strong>Untuk akun bengkel</strong> (nama pemilik/staf, email, dan kata sandi), Tamirhane bertindak sebagai pengendali data.</li>
+    <li><strong>Untuk data pelanggan bengkel</strong> (nama, telepon/WhatsApp, detail perangkat, riwayat servis), pengendali data adalah bengkel yang mencatat pelanggan tersebut. Tamirhane menyimpan dan memproses data ini atas nama dan instruksi bengkel (pemroses data). Pelanggan sebaiknya mengajukan permintaan terkait data ke bengkel tempat perangkat dititipkan terlebih dahulu; jika permintaan dikirim ke kami, kami akan meneruskannya ke bengkel terkait.</li>
+</ul>
+
+<h2>Data apa yang diproses?</h2>
+<ul>
+    <li><strong>Akun bengkel:</strong> nama bengkel, alamat, telepon; nama pemilik/staf, alamat email, hash satu arah kata sandi (kata sandi asli tidak pernah disimpan), preferensi bahasa, dan cabang.</li>
+    <li><strong>Data pelanggan bengkel:</strong> nama, nomor telepon/WhatsApp, email opsional, waktu pemberitahuan privasi dibacakan; jenis perangkat, merek, model, nomor seri/IMEI, aksesori, kondisi terlihat, keluhan; baris estimasi biaya, persetujuan/penolakan (nama dan waktu pemutus), catatan pembayaran, dan catatan yang dibagikan ke pelanggan.</li>
+    <li><strong>Kode kunci perangkat (PIN/Password/pola):</strong> disimpan hanya jika diperlukan untuk perbaikan dan dimasukkan oleh bengkel; dihapus saat order servis ditutup. Kode ini tidak pernah tampil di tanda terima atau halaman pelacakan.</li>
+    <li><strong>Notifikasi browser:</strong> jika pelanggan mengaktifkannya dari halaman pelacakan, alamat push dan kunci yang diberikan browser; dihapus saat notifikasi dimatikan atau bersama notifikasi terakhir order servis.</li>
+    <li><strong>Catatan teknis:</strong> untuk keamanan dan pencegahan penyalahgunaan, pembatasan laju menyimpan alamat IP sementara di memori; tidak ditulis ke database. Log error server disimpan untuk waktu singkat.</li>
+</ul>
+
+<h2>Tujuan pengumpulan dan dasar pemrosesan</h2>
+<ul>
+    <li><strong>Penyediaan layanan servis:</strong> membuat akun, masuk, mencatat order servis, estimasi biaya, stok, dan pembayaran. Dasar: pelaksanaan kontrak/layanan yang diminta bengkel.</li>
+    <li><strong>Memberi informasi ke pelanggan:</strong> halaman pelacakan, email, dan notifikasi browser status perbaikan. Dasar: atas nama bengkel berdasarkan hubungan servis dengan pelanggan dan persetujuan/pemberitahuan yang dibacakan saat penerimaan perangkat.</li>
+    <li><strong>Keamanan layanan:</strong> reset kata sandi, batas percobaan masuk, pencegahan penyalahgunaan. Dasar: kepentingan yang sah untuk menjaga keamanan sistem.</li>
+</ul>
+<p>Data tidak digunakan untuk iklan atau profiling dan tidak dijual. Situs ini tidak menjalankan iklan, analytics, atau skrip pelacakan.</p>
+
+<h2>Hak subjek data (pelanggan)</h2>
+<p>Sesuai prinsip UU PDP No. 27 Tahun 2022, pelanggan dapat meminta informasi tentang data pribadinya, meminta perbaikan data yang salah/tidak akurat, atau meminta penghapusan data pribadinya setelah transaksi servis selesai, sepanjang tidak bertentangan dengan kewajiban penyimpanan yang berlaku. Permintaan dapat diajukan ke bengkel tempat perangkat dititipkan. Jika permintaan dikirim ke <a href="mailto:mrcdprmm@hotmail.com">mrcdprmm@hotmail.com</a>, kami akan meneruskannya ke bengkel terkait.</p>
+
+<h2>Siapa yang menerima data?</h2>
+<p>Layanan berjalan pada penyedia infrastruktur berikut; data disimpan dan ditransmisikan di server mereka di Uni Eropa (Frankfurt, Irlandia):</p>
+<ul>
+    <li><strong>Oracle Cloud</strong> (server aplikasi), <strong>Neon</strong> (database PostgreSQL), <strong>Resend</strong> (email: verifikasi, reset kata sandi, undangan, dan email status ke pelanggan).</li>
+    <li>Notifikasi browser dikirim terenkripsi ke layanan push browser pelanggan (Google, Mozilla, Apple, dll.); layanan tersebut tidak dapat membaca isinya.</li>
+    <li>Jika staf bengkel menghubungkan asisten AI (mis. Claude), detail order servis, pelanggan, dan stok yang diminta asisten dapat dikirim ke layanan AI yang dipilih staf. Staf mengatur dan memutus koneksi sendiri; bengkel bertanggung jawab atas transfer ini. Kode kunci perangkat tidak pernah dikirim.</li>
+</ul>
+<p>Karena itu, data pribadi dapat ditransfer ke luar negeri. Selain itu, data tidak dibagikan kepada pihak lain kecuali diwajibkan oleh hukum.</p>
+
+<h2>Keamanan dan penyimpanan</h2>
+<ul>
+    <li>Data bengkel disimpan selama akun bengkel aktif. Saat pemilik menghapus bengkel dari Pengaturan, seluruh data terkait (order servis, pelanggan, stok, akun staf) dihapus permanen.</li>
+    <li>Bengkel demo dan data contoh dihapus otomatis setelah 24 jam.</li>
+    <li>Kode kunci perangkat dihapus saat order servis ditutup; tautan undangan yang tidak digunakan kedaluwarsa setelah 7 hari.</li>
+    <li>Kode kunci perangkat dienkripsi saat disimpan dan tidak dibagikan ke pihak ketiga di luar kepentingan perbaikan.</li>
+</ul>
+
+<h2>Cookie</h2>
+<p>Hanya cookie yang dibutuhkan agar layanan berjalan yang digunakan:</p>
+<ul>
+    <li><code>__Host-tamirhane</code>: sesi Anda (setelah masuk, hingga 14 hari).</li>
+    <li><code>__Host-tamirhane-csrf</code>: mencegah situs lain mengirim formulir atas nama Anda.</li>
+    <li><code>__Host-tamirhane-lang</code>: pilihan bahasa Anda (1 tahun).</li>
+</ul>
+<p>Pilihan tema terang/gelap disimpan di browser Anda (<code>localStorage</code>) dan tidak dikirim ke server.</p>
+
+<h2>Perubahan</h2>
+<p>Jika pemberitahuan ini berubah, versi terbaru akan dipublikasikan di halaman ini dan tanggal di atas diperbarui.</p>

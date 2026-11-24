@@ -1,20 +1,21 @@
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Testlerde sık geçen kullanıcı akışları: atölye sahibi olarak giriş, teknisyen daveti ve kabulü.</summary>
+/// <summary>Testlerde sÄ±k geÃ§en kullanÄ±cÄ± akÄ±ÅŸlarÄ±: atÃ¶lye sahibi olarak giriÅŸ, teknisyen daveti ve kabulÃ¼.</summary>
 public sealed partial class ShopFlows(TamirhaneWebFactory app)
 {
     public const string OwnerPassword = "kirmizi-kalem-42";
     public const string TechnicianPassword = "mavi-tornavida-17";
 
-    /// <summary>Atölye kaydı + e-posta doğrulama + giriş; sahibin tarayıcısını döner.</summary>
+    /// <summary>AtÃ¶lye kaydÄ± + e-posta doÄŸrulama + giriÅŸ; sahibin tarayÄ±cÄ±sÄ±nÄ± dÃ¶ner.</summary>
     public async Task<Browser> OwnerAsync(string email)
     {
         var browser = app.NewBrowser();
         await browser.SubmitAsync("/account/register", "/account/register", new()
         {
-            ["ShopName"] = "Kaya Telefon", ["OwnerName"] = "Ayşe Kaya", ["Email"] = email, ["Password"] = OwnerPassword, ["Locale"] = "tr",
+            ["ShopName"] = "Bengkel Jaya", ["OwnerName"] = "Ayşe Kaya", ["Email"] = email, ["Password"] = OwnerPassword, ["Locale"] = "id",
         });
         await browser.GetAsync(LinkIn(email, "/account/confirm-email"));
         var login = await browser.SubmitAsync("/account/login", "/account/login", new() { ["Email"] = email, ["Password"] = OwnerPassword });
@@ -38,7 +39,7 @@ public sealed partial class ShopFlows(TamirhaneWebFactory app)
         });
     }
 
-    /// <summary>Sahip davet eder, teknisyen kabul eder; teknisyenin tarayıcısını döner.</summary>
+    /// <summary>Sahip davet eder, teknisyen kabul eder; teknisyenin tarayÄ±cÄ±sÄ±nÄ± dÃ¶ner.</summary>
     public async Task<Browser> TechnicianAsync(Browser owner, string email)
     {
         await InviteAsync(owner, email);
@@ -47,24 +48,27 @@ public sealed partial class ShopFlows(TamirhaneWebFactory app)
         return technician;
     }
 
-    /// <summary>Yeni müşteriyle cihaz kabul eder; açılan iş emri sayfasının yolunu döner.</summary>
+    /// <summary>Yeni mÃ¼ÅŸteriyle cihaz kabul eder; aÃ§Ä±lan iÅŸ emri sayfasÄ±nÄ±n yolunu dÃ¶ner.</summary>
     public static async Task<string> ReceiveAsync(Browser browser, string phone)
     {
         var response = await browser.SubmitAsync($"/work-orders/new?phone={Uri.EscapeDataString(phone)}", "/work-orders/new", new()
         {
             ["Input.Phone"] = phone, ["Input.CustomerName"] = "Zeynep Arslan", ["Input.KvkkConsent"] = "true",
-            ["Input.DeviceKind"] = "Phone", ["Input.Brand"] = "Apple", ["Input.Model"] = "iPhone 13", ["Input.Complaint"] = "Ekran kırık",
+            ["Input.DeviceKind"] = "Phone", ["Input.Brand"] = "Apple", ["Input.Model"] = "iPhone 13", ["Input.Complaint"] = "Ekran kÄ±rÄ±k",
         });
         return Browser.RedirectOf(response);
     }
 
     public string InvitationLink(string email) => LinkIn(email, "/invitation");
 
-    /// <summary>Adrese giden, verilen sayfaya işaret eden son linkin yolu ve sorgusu.</summary>
+    /// <summary>Adrese giden, verilen sayfaya iÅŸaret eden son linkin yolu ve sorgusu.</summary>
     public string LinkIn(string email, string path)
     {
-        var mail = app.Emails.SentTo(email).Last(m => m.Text.Contains(path));
-        return new Uri(LinkPattern().Matches(mail.Text).Single(m => m.Value.Contains(path)).Value).PathAndQuery;
+        var mails = app.Emails.SentTo(email);
+        var mail = mails.LastOrDefault(m => (m.Text + "\n" + m.Html).Contains(path, StringComparison.OrdinalIgnoreCase))
+            ?? throw new InvalidOperationException($"No mail to {email} contains {path}. Got: {string.Join(" | ", mails.Select(m => m.Subject + " :: " + m.Text))}");
+        var body = mail.Text.Contains(path, StringComparison.OrdinalIgnoreCase) ? mail.Text : WebUtility.HtmlDecode(mail.Html);
+        return new Uri(LinkPattern().Matches(body).Last(m => m.Value.Contains(path, StringComparison.OrdinalIgnoreCase)).Value).PathAndQuery;
     }
 
     public static async Task<string> BodyAsync(Browser browser, string url) =>

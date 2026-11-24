@@ -25,14 +25,14 @@ public sealed class LanguageController : Controller
                 {
                     Expires = DateTimeOffset.UtcNow.AddYears(1),
                     HttpOnly = true,
-                    Secure = true, // __Host- öneki: sadece HTTPS, Path=/, alan adı yok
+                    Secure = true, // __Host- cookie: HTTPS only, Path=/, no domain
                     SameSite = SameSiteMode.Lax,
                     Path = "/",
-                    IsEssential = true, // kişisel veri değil, arayüz tercihi
+                    IsEssential = true, // UI preference, not personal data
                 });
         }
-        // Dönüş adresi önsüz gelir (sayfanın Request.Path'i); seçilen dilin öneki burada eklenir.
+        // returnUrl comes without language prefix; add prefix for selected culture.
         var path = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
-        return Redirect(LanguagePrefix.For(chosen ?? AppCultures.Turkish) + path);
+        return Redirect(LanguagePrefix.For(chosen ?? AppCultures.Indonesian) + path);
     }
 }

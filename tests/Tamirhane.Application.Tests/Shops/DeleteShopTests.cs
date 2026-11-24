@@ -7,7 +7,7 @@ namespace Tamirhane.Application.Tests.Shops;
 
 public class DeleteShopTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 11, 3, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 11, 3, 9, 0, 0, TimeSpan.FromHours(7));
     private const string Password = "kirmizi-kalem-42";
 
     private readonly FakeAccounts _accounts = new();

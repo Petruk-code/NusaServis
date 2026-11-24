@@ -33,7 +33,7 @@ public sealed class RegisterInput
     /// <summary>Müşteriye giden e-postaların ve takip sayfasının dili.</summary>
     [Display(Name = "field.customer_language")]
     [Required(ErrorMessage = "validation.language.required")]
-    public string Locale { get; set; } = "tr";
+    public string Locale { get; set; } = "id";
 }
 
 public sealed class LoginInput

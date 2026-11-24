@@ -9,15 +9,15 @@
         WorkOrderFilter.Open, WorkOrderFilter.AwaitingApproval, WorkOrderFilter.InRepair, WorkOrderFilter.Ready,
         WorkOrderFilter.Overdue, WorkOrderFilter.Closed, WorkOrderFilter.All,
     };
-    var turkey = TimeSpan.FromHours(3);
-    var today = Model.Now.ToOffset(turkey).Date;
+    var wib = TimeSpan.FromHours(7);
+    var today = Model.Now.ToOffset(wib).Date;
     string Waiting(WorkOrderRow row)
     {
         if (row.Status == WorkOrderStatus.Delivered && row.DeliveredAt is { } at)
-            return T["list.delivered_on", at.ToOffset(turkey).ToString("d MMM")];
+            return T["list.delivered_on", at.ToOffset(wib).ToString("d MMM")];
         if (row.Status == WorkOrderStatus.Cancelled)
             return T["list.cancelled"];
-        var days = (today - row.CreatedAt.ToOffset(turkey).Date).Days;
+        var days = (today - row.CreatedAt.ToOffset(wib).Date).Days;
         return days == 0 ? T["common.today"] : T["common.days", days];
     }
     bool Overdue(WorkOrderRow row) =>

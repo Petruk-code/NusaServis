@@ -85,23 +85,68 @@ Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a t
 
 ## Installation
 
-Requirements: the current .NET SDK and Docker (local database and integration tests).
+Requirements: current .NET SDK and PostgreSQL. Docker is optional (for Testcontainers integration tests / Docker-based local DB).
 
 ```sh
 git clone https://github.com/MrcDprm/tamirhane-repair-tracker.git
 cd tamirhane-repair-tracker
-docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
-cp .env.example .env          # values are explained in the file; empty RESEND_API_KEY prints emails to the console
-dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
-dotnet run --project src/Tamirhane.Web --launch-profile https
+cp .env.example .env
 ```
 
-Open https://localhost:7071 and press "Try the demo", or register a shop (the verification link appears in the console).
+`.env` is loaded in Development with the lowest priority. Keep `DATABASE_URL` commented for local PostgreSQL; if set, it overrides `ConnectionStrings:Tamirhane`.
 
-Tests: `dotnet test` (integration tests are skipped with a note if Docker is not running).
+### Option A: Local PostgreSQL (recommended for dev)
 
-Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md).
+Use `src/Tamirhane.Web/appsettings.Development.json` default:
+
+```json
+"ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
+```
+
+Windows/Scoop helper:
+
+```powershell
+scoop install postgresql
+.\scripts\dev-local.ps1 check
+.\scripts\dev-local.ps1 init       # one-time
+.\scripts\dev-local.ps1 start      # idempotent; run also does this
+.\scripts\dev-local.ps1 create-db
+.\scripts\dev-local.ps1 migrate
+.\scripts\dev-local.ps1 run        # auto-starts PostgreSQL if stopped
+```
+
+Manual commands:
+
+```sh
+dotnet tool install --global dotnet-ef
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
+```
+
+### Option B: Docker PostgreSQL
+
+```sh
+docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
+```
+
+Set `DATABASE_URL=postgresql://tamirhane:tamirhane@localhost:5433/tamirhane` in `.env` (or use the matching connection string), then run migrations and app.
+
+### Option C: Neon PostgreSQL
+
+Set `DATABASE_URL` to your Neon connection string in `.env` (do not commit it). `postgresql://`/`postgres://` URLs are supported; `sslmode=require` is accepted. For safety, keep Neon credentials in `.env.neon` or environment variables and only copy when needed.
+
+```sh
+# .env
+DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
+dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
+dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
+```
+
+Open https://localhost:7071 (or the URL shown by `dotnet run`) and press "Try the demo", or register a shop (the verification link appears in the console when `RESEND_API_KEY` is empty).
+
+Tests: `dotnet test`. Docker-gated integration tests run with Docker/Testcontainers; they can also run against an external PostgreSQL by setting `TEST_DATABASE_URL` or `DATABASE_URL` (the test fixtures create/drop an isolated schema per run).
+
+Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md). Local dev details: [docs/local-dev.md](docs/local-dev.md).
 
 ## Use with Claude
 

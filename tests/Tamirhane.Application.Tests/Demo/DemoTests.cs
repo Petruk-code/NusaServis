@@ -10,7 +10,7 @@ namespace Tamirhane.Application.Tests.Demo;
 /// <summary>Demo atölye: örnek veri tutarlı ve her ekranı dolduruyor; açılış sınırı ve şifresiz oturum sadece demo hesabına.</summary>
 public class DemoTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 30, 14, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 30, 14, 0, 0, TimeSpan.FromHours(7));
 
     private static DemoWorkshop Build(string locale = "tr") => DemoData.Build(locale, Guid.NewGuid(), Guid.NewGuid(), Now);
 
@@ -109,13 +109,13 @@ public class DemoTests
     }
 
     [Fact]
-    public async Task Unknown_language_falls_back_to_turkish()
+    public async Task Unknown_language_falls_back_to_indonesian()
     {
         var (start, demos, _, _) = Start();
 
         await start.HandleAsync("de", default);
 
-        Assert.Equal("tr", Assert.Single(demos.Added).Shop.Locale);
+        Assert.Equal("id", Assert.Single(demos.Added).Shop.Locale);
     }
 
     [Fact]

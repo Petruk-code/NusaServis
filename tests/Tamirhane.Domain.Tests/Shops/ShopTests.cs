@@ -4,7 +4,7 @@ namespace Tamirhane.Domain.Tests.Shops;
 
 public class ShopTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(7));
 
     [Fact]
     public void Only_a_demo_shop_is_marked_as_demo()

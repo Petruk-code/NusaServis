@@ -5,8 +5,8 @@
 @model DashboardView
 @{
     ViewData["Title"] = T["nav.panel"];
-    var turkey = TimeSpan.FromHours(3);
-    var today = Model.Now.ToOffset(turkey);
+    var wib = TimeSpan.FromHours(7);
+    var today = Model.Now.ToOffset(wib);
     var counts = Model.Counts;
     // Günün sayıları: panoya asılı etiketler. Her biri iş emri listesini o süzgeçle açar.
     var tags = new (string Label, int Count, WorkOrderFilter Filter, string Hint, bool Warn)[]
@@ -18,7 +18,7 @@
     };
     string Waiting(WorkOrderRow row)
     {
-        var days = (today.Date - row.CreatedAt.ToOffset(turkey).Date).Days;
+        var days = (today.Date - row.CreatedAt.ToOffset(wib).Date).Days;
         return days == 0 ? T["common.today"] : T["common.days", days];
     }
 }

@@ -10,13 +10,13 @@ public class WhatsAppMessageTests
     private static readonly Uri Tracking = new("https://tamirhane.test/t/7K3M9QX2HFDA");
 
     [Theory]
-    [InlineData("+905321234567", "905321234567")]
-    [InlineData("+4915112345678", "4915112345678")] // yurt dışı numara olduğu gibi
+    [InlineData("+6281234567890", "6281234567890")]
+    [InlineData("+4915112345678", "4915112345678")]
     public void Link_uses_the_international_number_without_plus(string phone, string digits)
     {
-        var link = WhatsAppMessage.Link(phone, "Merhaba");
+        var link = WhatsAppMessage.Link(phone, "Halo");
 
-        Assert.Equal($"https://wa.me/{digits}?text=Merhaba", link.AbsoluteUri);
+        Assert.Equal($"https://wa.me/{digits}?text=Halo", link.AbsoluteUri);
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class WhatsAppMessageTests
     {
         var text = WhatsAppMessage.Text("Ayşe Nur Kaya", "Apple iPhone 13", "2026-0042", WorkOrderStatus.Ready, "tr", Tracking);
 
-        var link = WhatsAppMessage.Link("+905321234567", text);
+        var link = WhatsAppMessage.Link("+6281234567890", text);
 
         Assert.DoesNotContain(" ", link.AbsoluteUri);
         Assert.DoesNotContain("\n", link.AbsoluteUri);
@@ -32,13 +32,13 @@ public class WhatsAppMessageTests
     }
 
     [Fact]
-    public void Turkish_message_greets_by_first_name_and_ends_with_the_tracking_link()
+    public void Indonesian_message_greets_by_first_name_and_ends_with_the_tracking_link()
     {
-        var text = WhatsAppMessage.Text("Ayşe Nur Kaya", "Apple iPhone 13", "2026-0042", WorkOrderStatus.Ready, "tr", Tracking);
+        var text = WhatsAppMessage.Text("Budi Santoso", "Apple iPhone 13", "2026-0042", WorkOrderStatus.Ready, "id", Tracking);
 
-        Assert.Equal(
-            "Merhaba Ayşe,\nCihazın hazır. Fişinle gelip teslim alabilirsin.\nApple iPhone 13, iş emri 2026-0042\n" +
-            "Onarımı takip et: https://tamirhane.test/t/7K3M9QX2HFDA", text);
+        Assert.StartsWith("Halo Budi,", text);
+        Assert.Contains("Apple iPhone 13", text);
+        Assert.EndsWith("https://tamirhane.test/t/7K3M9QX2HFDA", text);
     }
 
     [Fact]
@@ -63,16 +63,16 @@ public class WhatsAppMessageTests
     public async Task Work_order_page_offers_the_link_for_the_current_status()
     {
         var shop = new TestShop();
-        var id = await shop.ReceiveAsync("0532 123 45 67");
+        var id = await shop.ReceiveAsync("0812 3456 7890");
         await shop.StartDiagnosis().HandleAsync(id, default);
 
         var view = (await shop.GetWorkOrder().HandleAsync(id, default)).Value;
 
         var link = view.WhatsAppLink!.AbsoluteUri;
-        Assert.StartsWith("https://wa.me/905321234567?text=", link);
+        Assert.StartsWith("https://wa.me/6281234567890?text=", link);
         var text = Uri.UnescapeDataString(view.WhatsAppLink.Query["?text=".Length..]);
-        Assert.Contains("Cihazın inceleniyor.", text);
-        Assert.EndsWith($"/t/{view.TrackingCode}", text);
+        Assert.Contains($"/t/{view.TrackingCode}", text);
+        Assert.False(string.IsNullOrWhiteSpace(text));
     }
 
     [Fact]

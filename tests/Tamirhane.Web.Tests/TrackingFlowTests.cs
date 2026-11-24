@@ -1,11 +1,11 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.RegularExpressions;
 using Tamirhane.Web.RateLimiting;
 using static Tamirhane.Web.Tests.ShopFlows;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Müşteri takip sayfası (/t/kod): girişsiz erişim, gizlilik, 404, rate limit ve atölyedeki değişikliklerin yansıması; HTTP üzerinden.</summary>
+/// <summary>MÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri takip sayfasÃƒâ€žÃ‚Â± (/t/kod): giriÃƒâ€¦Ã…Â¸siz eriÃƒâ€¦Ã…Â¸im, gizlilik, 404, rate limit ve atÃƒÆ’Ã‚Â¶lyedeki deÃƒâ€žÃ…Â¸iÃƒâ€¦Ã…Â¸ikliklerin yansÃƒâ€žÃ‚Â±masÃƒâ€žÃ‚Â±; HTTP ÃƒÆ’Ã‚Â¼zerinden.</summary>
 [Collection(WebCollection.Name)]
 public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
 {
@@ -15,29 +15,29 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
     public async Task Customer_sees_device_status_and_shop_contact_without_signing_in()
     {
         var owner = await _flows.OwnerAsync("takip@example.com");
-        await SetBranchAsync(owner, "Moda Cd. No: 12 Kadıköy", "0216 345 67 89");
-        var (_, tracking) = await ReceiveAsync(owner, "0532 301 01 01");
+        await SetBranchAsync(owner, "Jl. Melati No. 12 Jakarta", "0212 5550 1234");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
 
         var response = await app.NewBrowser().GetAsync(tracking);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        // Razor "+" işaretini &#x2B; diye kodlar; tarayıcı linki yine +90... olarak açar.
+        // Razor "+" iÃƒâ€¦Ã…Â¸aretini &#x2B; diye kodlar; tarayÃƒâ€žÃ‚Â±cÃƒâ€žÃ‚Â± linki yine +90... olarak aÃƒÆ’Ã‚Â§ar.
         var page = WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
 
-        foreach (var expected in new[] { "Apple iPhone 13", "Ekran kırık", "Ze**** Ar****", "Teslim alındı", "Arıza tespiti",
-                     "Kaya Telefon", "Moda Cd. No: 12 Kadıköy", "href=\"tel:+902163456789\"", "0216 345 67 89", "Yol tarifi" }.Where(e => !page.Contains(e)))
+        foreach (var expected in new[] { "Apple iPhone 13", "Ekran kırık", "Ze**** Ar****", "Diterima", "Pengecekan / Diagnosa",
+                     "Bengkel Jaya", "Jl. Melati No. 12 Jakarta", "href=\"tel:+6221255501234\"", "0212 5550 1234", "Petunjuk arah" }.Where(e => !page.Contains(e)))
             Assert.Fail($"Sayfada yok: {expected}");
-        Assert.DoesNotContain("class=\"shell\"", page); // atölye menüsü yok
+        Assert.DoesNotContain("class=\"shell\"", page); // atÃƒÆ’Ã‚Â¶lye menÃƒÆ’Ã‚Â¼sÃƒÆ’Ã‚Â¼ yok
     }
 
     [DockerFact]
     public async Task Page_never_contains_full_name_phone_email_passcode_or_imei()
     {
         var owner = await _flows.OwnerAsync("takip-gizli@example.com");
-        var (_, tracking) = await ReceiveAsync(owner, "0532 302 02 02");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
 
         var page = await BodyAsync(app.NewBrowser(), tracking);
 
-        foreach (var secret in new[] { "Zeynep", "Arslan", "0532 302", "+90532302", "zeynep@example.com", "4826", "490154203237518", "Ayşe Kaya" })
+        foreach (var secret in new[] { "Zeynep", "Arslan", "0812 3456", "+62812302", "zeynep@example.com", "4826", "490154203237518", "AyÃƒâ€¦Ã…Â¸e Kaya" })
             Assert.DoesNotContain(secret, page);
     }
 
@@ -45,7 +45,7 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
     public async Task Page_is_kept_out_of_search_engines_referrers_and_caches()
     {
         var owner = await _flows.OwnerAsync("takip-baslik@example.com");
-        var (_, tracking) = await ReceiveAsync(owner, "0532 303 03 03");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
 
         var response = await app.NewBrowser().GetAsync(tracking);
 
@@ -65,14 +65,14 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
         Assert.Equal(HttpStatusCode.NotFound, invalid.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
         Assert.Equal(await invalid.Content.ReadAsStringAsync(), await unknown.Content.ReadAsStringAsync());
-        Assert.Contains("Bu takip kodu bulunamadı", await unknown.Content.ReadAsStringAsync());
+        Assert.Contains("Kami tidak dapat menemukan kode pelacakan ini", await unknown.Content.ReadAsStringAsync());
     }
 
     [DockerFact]
     public async Task Code_works_in_lower_case_and_with_dashes()
     {
         var owner = await _flows.OwnerAsync("takip-yazim@example.com");
-        var (_, tracking) = await ReceiveAsync(owner, "0532 304 04 04");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
         var code = tracking[3..];
 
         var typed = $"/t/{code[..4].ToLowerInvariant()}-{code[4..8]}-{code[8..]}";
@@ -83,20 +83,20 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
     public async Task Workshop_changes_status_notes_and_promise_show_up_but_private_notes_do_not()
     {
         var owner = await _flows.OwnerAsync("takip-guncel@example.com");
-        var (order, tracking) = await ReceiveAsync(owner, "0532 305 05 05");
+        var (order, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
         var promised = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3)).AddDays(4);
 
         await owner.SubmitAsync(order, order + "/steps", new() { ["Step"] = "StartDiagnosis" });
-        await owner.SubmitAsync(order, order + "/notes", new() { ["Text"] = "Ekran siparişi verildi", ["VisibleToCustomer"] = "true" });
+        await owner.SubmitAsync(order, order + "/notes", new() { ["Text"] = "Ekran sipariÃƒâ€¦Ã…Â¸i verildi", ["VisibleToCustomer"] = "true" });
         await owner.SubmitAsync(order, order + "/notes", new() { ["Text"] = "Kasada darbe izi var" });
         Assert.Equal(order, Browser.RedirectOf(await owner.SubmitAsync(order, order + "/promise", new() { ["Date"] = promised.ToString("yyyy-MM-dd") })));
 
         var page = await BodyAsync(app.NewBrowser(), tracking);
-        Assert.Matches(@"class=""is-current"" aria-current=""step"">\s*<span class=""track-dot""[^>]*></span>\s*<span class=""track-step"">Arıza tespiti", page);
-        Assert.Contains("Ekran siparişi verildi", page);
+        Assert.Matches(@"class=""is-current"" aria-current=""step"">\s*<span class=""track-dot""[^>]*></span>\s*<span class=""track-step"">Pengecekan / Diagnosa", page);
+        Assert.Contains("Ekran sipariÃƒâ€¦Ã…Â¸i verildi", page);
         Assert.DoesNotContain("Kasada darbe izi var", page);
-        Assert.Contains("Tahmini teslim", page);
-        Assert.Contains(promised.ToString("d MMMM dddd", new System.Globalization.CultureInfo("tr-TR")), page);
+        Assert.Contains("Perkiraan selesai:", page);
+        Assert.Contains(promised.ToString("dddd, d MMMM", new System.Globalization.CultureInfo("id-ID")), page);
     }
 
     [DockerFact]
@@ -107,27 +107,27 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/t/7K3M9QX2HFD" + (i % 10))).StatusCode);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, (await visitor.GetAsync("/t/7K3M9QX2HFDA")).StatusCode);
-        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await app.NewBrowser().GetAsync("/t/7K3M9QX2HFDA")).StatusCode); // başka adres etkilenmez
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, (await app.NewBrowser().GetAsync("/t/7K3M9QX2HFDA")).StatusCode); // baÃƒâ€¦Ã…Â¸ka adres etkilenmez
     }
 
     [DockerFact]
     public async Task Page_opens_in_the_shop_customer_language_and_the_customer_can_switch()
     {
         var owner = await _flows.OwnerAsync("takip-dil@example.com");
-        var (_, tracking) = await ReceiveAsync(owner, "0532 304 04 04");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
 
-        // Personelin panel dili İngilizce olsa da müşterinin gördüğü sayfa atölyenin müşteri dilinde (Türkçe).
+        // Personelin panel dili Ãƒâ€žÃ‚Â°ngilizce olsa da mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸terinin gÃƒÆ’Ã‚Â¶rdÃƒÆ’Ã‚Â¼Ãƒâ€žÃ…Â¸ÃƒÆ’Ã‚Â¼ sayfa atÃƒÆ’Ã‚Â¶lyenin mÃƒÆ’Ã‚Â¼Ãƒâ€¦Ã…Â¸teri dilinde (TÃƒÆ’Ã‚Â¼rkÃƒÆ’Ã‚Â§e).
         await owner.SubmitAsync("/panel", "/language", new() { ["culture"] = "en", ["returnUrl"] = "/" });
         var page = await BodyAsync(owner, tracking);
-        Assert.Contains("<html lang=\"tr\">", page);
-        Assert.Contains(">Onarımın adımları</h2>", page);
+        Assert.Contains("<html lang=\"id\">", page);
+        Assert.Contains(">Langkah</h2>", page);
         Assert.Contains($"href=\"{tracking}?lang=en\"", page);
 
-        // Geçiş linki sayfayı ve düzeni (altbilgi) birlikte çevirir.
+        // GeÃƒÆ’Ã‚Â§iÃƒâ€¦Ã…Â¸ linki sayfayÃƒâ€žÃ‚Â± ve dÃƒÆ’Ã‚Â¼zeni (altbilgi) birlikte ÃƒÆ’Ã‚Â§evirir.
         var english = await BodyAsync(app.NewBrowser(), tracking + "?lang=en");
         foreach (var expected in new[] { "<html lang=\"en\">", ">Repair steps</h2>", ">Checked in<", "This page is just for you.", $"href=\"{tracking}?lang=tr\"" })
             Assert.Contains(expected, english);
-        Assert.DoesNotContain("Teslim alındı", english);
+        Assert.DoesNotContain("Diterima", english);
     }
 
     [DockerFact]
@@ -136,9 +136,9 @@ public sealed partial class TrackingFlowTests(TamirhaneWebFactory app)
         var owner = await _flows.OwnerAsync("takip-en@example.com");
         Assert.Equal("/settings", Browser.RedirectOf(await owner.SubmitAsync("/settings", "/settings", new()
         {
-            ["Shop.Name"] = "Kaya Telefon", ["Shop.WarrantyDays"] = "90", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "en",
+            ["Shop.Name"] = "Bengkel Jaya", ["Shop.WarrantyDays"] = "90", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "en",
         })));
-        var (_, tracking) = await ReceiveAsync(owner, "0532 305 05 05");
+        var (_, tracking) = await ReceiveAsync(owner, "0812 3456 7890");
 
         var page = await BodyAsync(app.NewBrowser(), tracking);
         Assert.Contains("<html lang=\"en\">", page);

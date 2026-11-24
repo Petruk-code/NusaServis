@@ -33,8 +33,8 @@ public sealed record TrackingView(
     public TrackingDecision? Decision { get; init; }
     public bool CanDecide => Status == WorkOrderStatus.AwaitingApproval;
 
-    /// <summary>Atölyenin müşteri dili ("tr" ya da "en"): sayfa bu dilde açılır.</summary>
-    public string Locale { get; init; } = "tr";
+    /// <summary>Atölyenin müşteri dili ("id", "en" veya "tr"): sayfa bu dilde açılır.</summary>
+    public string Locale { get; init; } = "id";
 }
 
 public sealed class GetTracking(IWorkOrderRepository orders, ITrackingDirectory directory)

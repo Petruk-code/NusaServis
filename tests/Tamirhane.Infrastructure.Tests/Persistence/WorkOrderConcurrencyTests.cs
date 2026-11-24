@@ -11,7 +11,7 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class WorkOrderConcurrencyTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task Second_of_two_simultaneous_decisions_is_refused()

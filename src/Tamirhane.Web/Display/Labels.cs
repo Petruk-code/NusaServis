@@ -66,9 +66,31 @@ public static class Labels
         _ => filter.ToString(),
     };
 
-    /// <summary>"+905321234567" → "0532 123 45 67"; yurt dışı numaralar olduğu gibi.</summary>
-    public static string Phone(string e164) =>
-        e164.Length == 13 && e164.StartsWith("+90")
-            ? $"0{e164[3..6]} {e164[6..9]} {e164[9..11]} {e164[11..13]}"
-            : e164;
+    /// <summary>Menampilkan nomor telepon untuk UI. +628... ditampilkan sebagai 08..., lainnya apa adanya.</summary>
+    public static string Phone(string e164)
+    {
+        if (string.IsNullOrWhiteSpace(e164)) return e164 ?? "";
+        if (e164.StartsWith("+62"))
+        {
+            var digits = "0" + e164[3..];
+            return digits.Length switch
+            {
+                >= 12 => $"{digits[..4]} {digits[4..8]} {digits[8..]}",
+                >= 11 => $"{digits[..4]} {digits[4..7]} {digits[7..]}",
+                _ => digits
+            };
+        }
+        if (e164.Length == 13 && e164.StartsWith("+90"))
+            return $"0{e164[3..6]} {e164[6..9]} {e164[9..11]} {e164[11..13]}";
+        return e164;
+    }
+
+    /// <summary>Nilai untuk link WhatsApp: hanya digit, format Indonesia 62...</summary>
+    public static string WhatsApp(string e164)
+    {
+        var digits = new string((e164 ?? "").Where(char.IsAsciiDigit).ToArray());
+        if (digits.StartsWith("0")) digits = "62" + digits[1..];
+        if (digits.StartsWith("8")) digits = "62" + digits;
+        return digits;
+    }
 }

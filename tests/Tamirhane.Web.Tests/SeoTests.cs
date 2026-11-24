@@ -1,18 +1,18 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Arama motoru (#42): iki dilin adresleri, canonical/hreflang, paylaşım kartı, yapılandırılmış veri, robots ve sitemap.</summary>
+/// <summary>SEO: id default / en prefix, canonical/hreflang, robots, sitemap.</summary>
 [Collection(WebCollection.Name)]
 public sealed partial class SeoTests(TamirhaneWebFactory app)
 {
     private const string Origin = "https://localhost";
 
     [DockerTheory]
-    [InlineData("/", "tr", "Tamirhane: Ücretsiz teknik servis ve tamir takip programı")]
+    [InlineData("/", "id", "Tamirhane: Software bengkel gratis dan pelacakan servis")]
     [InlineData("/en/", "en", "Tamirhane: Free repair shop software and repair tracking")]
     public async Task Landing_page_has_its_title_canonical_language_alternates_and_card(string path, string lang, string title)
     {
@@ -21,11 +21,11 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
         Assert.Contains($"<html lang=\"{lang}\">", html);
         Assert.Contains($"<title>{title}</title>", html);
         Assert.Contains($"<link rel=\"canonical\" href=\"{Origin}{path}\" />", html);
-        Assert.Contains($"<link rel=\"alternate\" hreflang=\"tr\" href=\"{Origin}/\" />", html);
+        Assert.Contains($"<link rel=\"alternate\" hreflang=\"id\" href=\"{Origin}/\" />", html);
         Assert.Contains($"<link rel=\"alternate\" hreflang=\"en\" href=\"{Origin}/en/\" />", html);
         Assert.Contains($"<link rel=\"alternate\" hreflang=\"x-default\" href=\"{Origin}/\" />", html);
         Assert.Contains($"<meta property=\"og:image\" content=\"{Origin}/img/og-{lang}.png\" />", html);
-        Assert.Matches("<meta name=\"description\" content=\"[^\"]{80,170}\" />", html); // arama sonucunda kesilmeyecek uzunlukta
+        Assert.Matches("<meta name=\"description\" content=\"[^\"]{80,170}\" />", html);
         Assert.Single(Regex.Matches(html, "<h1[ >]"));
         Assert.DoesNotContain("noindex", html);
 
@@ -37,12 +37,12 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
     [DockerTheory]
     [InlineData("/en/privacy", "/privacy", "/en/privacy")]
     [InlineData("/terms", "/terms", "/en/terms")]
-    public async Task Legal_pages_point_to_both_languages(string path, string turkish, string english)
+    public async Task Legal_pages_point_to_both_languages(string path, string indonesian, string english)
     {
         var html = await (await app.NewBrowser().GetAsync(path)).Content.ReadAsStringAsync();
 
         Assert.Contains($"<link rel=\"canonical\" href=\"{Origin}{path}\" />", html);
-        Assert.Contains($"hreflang=\"tr\" href=\"{Origin}{turkish}\"", html);
+        Assert.Contains($"hreflang=\"id\" href=\"{Origin}{indonesian}\"", html);
         Assert.Contains($"hreflang=\"en\" href=\"{Origin}{english}\"", html);
     }
 
@@ -66,7 +66,7 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
         Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
         foreach (var path in new[] { "/panel", "/en/panel", "/work-orders", "/t/", "/en/account/" })
             Assert.Contains($"Disallow: {path}\n", text);
-        Assert.DoesNotContain("Disallow: /\n", text); // tanıtım taranır
+        Assert.DoesNotContain("Disallow: /\n", text);
         Assert.Contains($"Sitemap: {Origin}/sitemap.xml", text);
     }
 
@@ -83,7 +83,6 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
         Assert.All(xml.Descendants(sm + "url"), url => Assert.Equal(3, url.Elements().Count(e => e.Name.LocalName == "link")));
     }
 
-    // Razor türdeki "+" işaretini HTML varlığı olarak yazar (&#x2B;); tarayıcı ve Google ikisini aynı okur.
     [GeneratedRegex("<script type=\"application/ld(?:\\+|&#x2B;)json\">(.*?)</script>", RegexOptions.Singleline)]
     private static partial Regex JsonLd();
 }

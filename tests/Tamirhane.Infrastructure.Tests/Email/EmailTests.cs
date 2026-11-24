@@ -25,7 +25,7 @@ public sealed class EmailTests
     }
 
     [Theory]
-    [InlineData("tr", "lang=\"tr\"", "Düğme çalışmazsa")]
+    [InlineData("id", "lang=\"id\"", "Jika tombol tidak berfungsi")]
     [InlineData("en", "lang=\"en\"", "If the button does not work")]
     public void Layout_is_written_in_the_shop_language(string locale, string lang, string help)
     {
@@ -57,12 +57,12 @@ public sealed class EmailTests
     }
 
     [Theory]
-    [InlineData("tr", "Çağlar Teknik seni Tamirhane'ye davet etti", "26 Ekim 2026 12:00")]
-    [InlineData("en", "Çağlar Teknik invited you to Tamirhane", "26 October 2026 12:00")]
-    public void Invitation_shows_the_expiry_in_turkey_time_and_language(string locale, string subject, string expires)
+    [InlineData("id", "Bengkel Jaya mengundang Anda ke Tamirhane", "26 Oktober 2026 16:00")]
+    [InlineData("en", "Bengkel Jaya invited you to Tamirhane", "26 October 2026 16:00")]
+    public void Invitation_shows_the_expiry_in_local_time_and_language(string locale, string subject, string expires)
     {
-        // Veritabanından UTC okunur: 09:00 UTC = 12:00 Türkiye.
-        var invitation = new StaffInvitationEmail("usta@example.com", "tok", "Çağlar Teknik", "Ayşe Kaya", locale,
+        // DB stores UTC: 09:00 UTC = 16:00 WIB.
+        var invitation = new StaffInvitationEmail("usta@example.com", "tok", "Bengkel Jaya", "Budi Santoso", locale,
             new DateTimeOffset(2026, 10, 26, 9, 0, 0, TimeSpan.Zero));
 
         var mail = AccountEmails.Invitation(invitation, Link);

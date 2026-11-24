@@ -13,7 +13,7 @@ public class PushSubscriptionHandlerTests
 {
     private const string Code = "7K3M9QX2HFDA";
     private const string Endpoint = "https://fcm.googleapis.com/fcm/send/abc123";
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(7));
 
     private readonly FakeWorkOrders _orders = new(new FakeUser(Guid.NewGuid()));
     private readonly FakeUnitOfWork _unitOfWork = new();

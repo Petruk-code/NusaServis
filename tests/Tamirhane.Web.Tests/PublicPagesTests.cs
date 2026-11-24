@@ -1,8 +1,8 @@
-using System.Net;
+﻿using System.Net;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Tanıtım, gizlilik/KVKK ve kullanım koşulları sayfaları (#37): oturumsuz açılır, iki dilde, alt bilgide yasal linkler.</summary>
+/// <summary>Public pages: landing, privacy/terms, legal links, language variants.</summary>
 [Collection(WebCollection.Name)]
 public sealed class PublicPagesTests(TamirhaneWebFactory app)
 {
@@ -29,9 +29,9 @@ public sealed class PublicPagesTests(TamirhaneWebFactory app)
     }
 
     [DockerTheory]
-    [InlineData("/privacy", "Gizlilik ve KVKK aydınlatma metni", "veri işleyen")]
-    [InlineData("/en/privacy", "Privacy and KVKK notice", "data processor")]
-    [InlineData("/terms", "Kullanım koşulları", "olduğu gibi")]
+    [InlineData("/privacy", "Kebijakan privasi dan pelindungan data pribadi", "pemroses data")]
+    [InlineData("/en/privacy", "Privacy and personal data notice", "data processor")]
+    [InlineData("/terms", "Syarat penggunaan", "sebagaimana adanya")]
     [InlineData("/en/terms", "Terms of use", "as is")]
     public async Task Legal_pages_open_without_a_session_in_both_languages(string path, string heading, string body)
     {
@@ -48,7 +48,7 @@ public sealed class PublicPagesTests(TamirhaneWebFactory app)
     {
         var html = await (await app.NewBrowser().GetAsync("/account/register")).Content.ReadAsStringAsync();
 
-        Assert.Contains("<a href=\"/terms\">kullanım koşullarını</a>", html);
-        Assert.Contains("<a href=\"/privacy\">gizlilik metninde</a>", html);
+        Assert.Contains("<a href=\"/terms\">syarat penggunaan</a>", html);
+        Assert.Contains("<a href=\"/privacy\">kebijakan privasi</a>", html);
     }
 }

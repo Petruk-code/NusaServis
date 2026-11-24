@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = $"{T["warranty.title"]}: {Model.Previous.Number}";
     var previous = Model.Previous;
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
 }
 
 <div class="page-head">
@@ -20,7 +20,7 @@
             @T["warranty.from_previous"]
             @if (previous.WarrantyUntil is { } until)
             {
-                @T["workorder.warranty_until", until.ToOffset(turkey).ToString("d MMMM yyyy")]
+                @T["workorder.warranty_until", until.ToOffset(wib).ToString("d MMMM yyyy")]
             }
             @T["warranty.linked"]
         </p>

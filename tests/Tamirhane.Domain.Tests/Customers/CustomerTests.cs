@@ -4,15 +4,15 @@ namespace Tamirhane.Domain.Tests.Customers;
 
 public class CustomerTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(7));
 
     [Theory]
-    [InlineData("0532 123 45 67", "+905321234567")]
-    [InlineData("05321234567", "+905321234567")]
-    [InlineData("532 123 4567", "+905321234567")]
-    [InlineData("+90 532 123 45 67", "+905321234567")]
-    [InlineData("0090 532 123 45 67", "+905321234567")]
-    [InlineData("(0212) 444-12-34", "+902124441234")]
+    [InlineData("0812 3456 7890", "+6281234567890")]
+    [InlineData("081234567890", "+6281234567890")]
+    [InlineData("812 3456 7890", "+6281234567890")]
+    [InlineData("+62 812 3456 7890", "+6281234567890")]
+    [InlineData("0062 812 3456 7890", "+6281234567890")]
+    [InlineData("(0212) 5550-1234", "+6221255501234")]
     [InlineData("+44 20 7946 0958", "+442079460958")]
     [InlineData("+1 (415) 555-2671", "+14155552671")]
     public void Phone_numbers_are_normalized_to_e164(string input, string expected)
@@ -24,9 +24,9 @@ public class CustomerTests
     [InlineData("")]
     [InlineData("12345")]
     [InlineData("0032 123 45 67 89 01 23 45")]
-    [InlineData("0132 123 45 67")]
-    [InlineData("+90 532 123 45")]
-    [InlineData("0532 123 45 67 ext 5")]
+    [InlineData("0123 123 45 67")]
+    [InlineData("+62 812 345")]
+    [InlineData("0812 3456 7890 ext 5")]
     [InlineData("+0 123 456 789")]
     public void Invalid_phone_numbers_are_rejected(string input)
     {
@@ -36,7 +36,7 @@ public class CustomerTests
     [Fact]
     public void Customer_requires_kvkk_consent()
     {
-        var result = Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0532 123 45 67", null, kvkkConsent: false, Now);
+        var result = Customer.Create(Guid.NewGuid(), "Budi Santoso", "0812 3456 7890", null, kvkkConsent: false, Now);
 
         Assert.Equal(CustomerErrors.ConsentRequired, result.Error);
     }
@@ -44,11 +44,11 @@ public class CustomerTests
     [Fact]
     public void Customer_normalizes_name_phone_and_email()
     {
-        var customer = Customer.Create(Guid.NewGuid(), "  Ayşe   Kaya ", "0532 123 45 67", " Ayse.Kaya@Example.com ", true, Now).Value;
+        var customer = Customer.Create(Guid.NewGuid(), "  Budi   Santoso ", "0812 3456 7890", " Budi.Santoso@Example.com ", true, Now).Value;
 
-        Assert.Equal("Ayşe Kaya", customer.Name);
-        Assert.Equal("+905321234567", customer.Phone.Value);
-        Assert.Equal("ayse.kaya@example.com", customer.Email);
+        Assert.Equal("Budi Santoso", customer.Name);
+        Assert.Equal("+6281234567890", customer.Phone.Value);
+        Assert.Equal("budi.santoso@example.com", customer.Email);
         Assert.Equal(Now, customer.KvkkConsentAt);
     }
 
@@ -60,7 +60,7 @@ public class CustomerTests
     [InlineData("ayse kaya@example.com")]
     public void Invalid_emails_are_rejected(string email)
     {
-        var result = Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0532 123 45 67", email, true, Now);
+        var result = Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0812 3456 7890", email, true, Now);
 
         Assert.Equal(CustomerErrors.InvalidEmail, result.Error);
     }
@@ -68,8 +68,8 @@ public class CustomerTests
     [Fact]
     public void Email_is_optional_and_name_needs_two_letters()
     {
-        Assert.Null(Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0532 123 45 67", "  ", true, Now).Value.Email);
-        Assert.Equal(CustomerErrors.InvalidName, Customer.Create(Guid.NewGuid(), "A", "0532 123 45 67", null, true, Now).Error);
+        Assert.Null(Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0812 3456 7890", "  ", true, Now).Value.Email);
+        Assert.Equal(CustomerErrors.InvalidName, Customer.Create(Guid.NewGuid(), "A", "0812 3456 7890", null, true, Now).Error);
     }
 
     [Theory]
@@ -86,7 +86,7 @@ public class CustomerTests
     [Fact]
     public void Device_belongs_to_the_customer_and_validates_imei()
     {
-        var owner = Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0532 123 45 67", null, true, Now).Value;
+        var owner = Customer.Create(Guid.NewGuid(), "Ayşe Kaya", "0812 3456 7890", null, true, Now).Value;
 
         var device = Device.Create(owner, DeviceKind.Phone, " Apple ", " iPhone 13 ", " f2lx123 ", "49 0154 2032 3751 8").Value;
 

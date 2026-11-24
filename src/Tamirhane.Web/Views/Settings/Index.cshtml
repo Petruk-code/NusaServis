@@ -32,8 +32,9 @@
             <div class="field">
                 <label asp-for="Shop.Locale"></label>
                 <select asp-for="Shop.Locale">
-                    <option value="tr">Türkçe</option>
+                    <option value="id">Bahasa Indonesia</option>
                     <option value="en">English</option>
+                    <option value="tr">Türkçe</option>
                 </select>
                 <span asp-validation-for="Shop.Locale"></span>
             </div>
@@ -47,7 +48,7 @@
             </div>
             <div class="field">
                 <label asp-for="Shop.DefaultVatRate"></label>
-                @* type="number" tarayıcıda her zaman nokta ondalıkla gönderir; değer de kültürden bağımsız yazılır. *@
+                @* type="number" Peramban selalu mengirimkannya dengan tanda titik desimal; nilai tersebut juga ditulis dalam format yang tidak bergantung pada budaya tertentu.. *@
                 <input name="Shop.DefaultVatRate" id="Shop_DefaultVatRate" type="number" min="0" max="100" step="0.01" inputmode="decimal"
                        value="@Model.Shop.DefaultVatRate.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
                        aria-describedby="vat-help" />

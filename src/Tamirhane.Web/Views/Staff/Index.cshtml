@@ -2,7 +2,7 @@
 @model StaffPage
 @{
     ViewData["Title"] = T["nav.staff"];
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
 }
 
 <div class="page-head">
@@ -85,7 +85,7 @@
                 <li>
                     <span>
                         <strong>@invitation.Email</strong>
-                        <span class="muted">, @T["staff.valid_until", invitation.ExpiresAt.ToOffset(turkey).ToString("d MMMM HH:mm")]</span>
+                        <span class="muted">, @T["staff.valid_until", invitation.ExpiresAt.ToOffset(wib).ToString("d MMMM HH:mm")]</span>
                     </span>
                     <form asp-action="Revoke" asp-route-id="@invitation.Id" method="post">
                         <button type="submit" class="btn">@T["staff.revoke"]</button>

@@ -10,7 +10,7 @@ namespace Tamirhane.Application.Tests.WorkOrders;
 public class TrackingViewTests
 {
     private static readonly Guid Staff = Guid.NewGuid();
-    private static readonly DateTimeOffset Now = new(2026, 10, 26, 10, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 26, 10, 0, 0, TimeSpan.FromHours(7));
     private const string Code = "7K3M9QX2HFDA";
 
     private readonly FakeWorkOrders _orders = new(new FakeUser(Guid.NewGuid()));

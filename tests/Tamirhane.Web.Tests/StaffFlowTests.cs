@@ -22,11 +22,11 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
 
         var invited = await InviteAsync(owner, "katil-usta@example.com");
         Assert.Equal("/staff", Browser.RedirectOf(invited));
-        Assert.Contains("katil-usta@example.com adresine davet gönderildi", await BodyAsync(owner, "/staff"));
+        Assert.Contains("Undangan dikirim ke katil-usta@example.com", await BodyAsync(owner, "/staff"));
 
         var technician = app.NewBrowser();
         var invitationPage = await BodyAsync(technician, _flows.InvitationLink("katil-usta@example.com"));
-        Assert.Contains("Kaya Telefon seni davet etti", invitationPage);
+        Assert.Contains("Bengkel Jaya mengundang Anda", invitationPage);
 
         Assert.Equal("/panel", Browser.RedirectOf(await _flows.AcceptAsync(technician, "katil-usta@example.com")));
         Assert.Equal(HttpStatusCode.OK, (await technician.GetAsync("/panel")).StatusCode);
@@ -66,7 +66,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
         Assert.StartsWith("/account/login", Browser.RedirectOf(await technician.GetAsync("/panel")));
         var login = await technician.SubmitAsync("/account/login", "/account/login",
             new() { ["Email"] = "cikar-usta@example.com", ["Password"] = TechnicianPassword });
-        Assert.Contains("E-posta ya da şifre hatalı.", await login.Content.ReadAsStringAsync());
+        Assert.Contains("Email atau kata sandi salah.", await login.Content.ReadAsStringAsync());
     }
 
     [DockerFact]
@@ -80,7 +80,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
 
         Assert.Equal("/staff", Browser.RedirectOf(response));
         var page = await BodyAsync(owner, "/staff");
-        Assert.Contains("Atölyenin sahibi kendini çıkaramaz.", page);
+        Assert.Contains("Pemilik bengkel tidak dapat menghapus dirinya sendiri.", page);
         Assert.Contains("Ayşe Kaya", page);
     }
 
@@ -92,19 +92,19 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
         var link = _flows.InvitationLink("link-usta@example.com");
         await _flows.AcceptAsync(app.NewBrowser(), "link-usta@example.com");
 
-        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), link));
+        Assert.Contains("Undangan tidak valid", await BodyAsync(app.NewBrowser(), link));
 
         await InviteAsync(owner, "geri-usta@example.com");
         var revokeAction = RevokePattern().Match(await BodyAsync(owner, "/staff")).Groups[1].Value;
         Assert.Equal("/staff", Browser.RedirectOf(await owner.SubmitAsync("/staff", revokeAction, new())));
-        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), _flows.InvitationLink("geri-usta@example.com")));
+        Assert.Contains("Undangan tidak valid", await BodyAsync(app.NewBrowser(), _flows.InvitationLink("geri-usta@example.com")));
     }
 
     [DockerFact]
     public async Task Tampered_link_is_invalid()
     {
-        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), "/invitation?token=uydurma"));
-        Assert.Contains("Davet linki geçersiz", await BodyAsync(app.NewBrowser(), "/invitation"));
+        Assert.Contains("Undangan tidak valid", await BodyAsync(app.NewBrowser(), "/invitation?token=uydurma"));
+        Assert.Contains("Undangan tidak valid", await BodyAsync(app.NewBrowser(), "/invitation"));
     }
 
     [DockerFact]
@@ -116,7 +116,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
         var weak = await _flows.AcceptAsync(app.NewBrowser(), "zayif-usta@example.com", "password123");
 
         Assert.Equal(HttpStatusCode.OK, weak.StatusCode);
-        Assert.Contains("sızıntı listelerinde çok sık geçiyor", await weak.Content.ReadAsStringAsync());
+        Assert.Contains("Kata sandi terlalu umum.", await weak.Content.ReadAsStringAsync());
         Assert.Equal("/panel", Browser.RedirectOf(await _flows.AcceptAsync(app.NewBrowser(), "zayif-usta@example.com")));
     }
 
@@ -129,7 +129,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
 
         var response = await _flows.AcceptAsync(app.NewBrowser(), "iki-usta@example.com");
 
-        Assert.Contains("zaten bir Tamirhane hesabı var", await response.Content.ReadAsStringAsync());
+        Assert.Contains("sudah memiliki akun Tamirhane", await response.Content.ReadAsStringAsync());
     }
 
     private static string StaffIdOf(string staffPage) => RemovePattern().Match(staffPage).Groups[1].Value;

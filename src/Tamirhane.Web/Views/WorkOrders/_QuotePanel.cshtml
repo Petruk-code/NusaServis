@@ -18,8 +18,8 @@
             <span class="stamp stamp-sm@(decision.Kind == QuoteDecisionKind.Approved ? " stamp-ok" : " stamp-warn")">
                 @T[decision.Kind == QuoteDecisionKind.Approved ? "quote.approved" : "quote.declined"]
             </span>
-            @* Müşteri takip sayfasından verdiyse personel kaydı yoktur; telefonla bildirdiyse personel onun adına kaydetmiştir. *@
-            <span class="muted">@decision.ByName, @T[decision.StaffId is null ? "quote.via_tracking" : "quote.via_phone"], @decision.At.ToOffset(TimeSpan.FromHours(3)).ToString("d MMMM HH:mm")</span>
+            @* Keputusan dari halaman pelacakan tidak punya staff; jika dicatat staf, dicatat atas nama pelanggan. *@
+            <span class="muted">@decision.ByName, @T[decision.StaffId is null ? "quote.via_tracking" : "quote.via_phone"], @decision.At.ToOffset(TimeSpan.FromHours(7)).ToString("d MMMM HH:mm")</span>
         }
         else if (Model.Status == WorkOrderStatus.AwaitingApproval)
         {

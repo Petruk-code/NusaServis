@@ -3,7 +3,7 @@ using static Tamirhane.Web.Tests.ShopFlows;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Kabul fişi, cihaz etiketi ve QR: içerik, gizlilik ve kiracı ayrımı; HTTP üzerinden.</summary>
+/// <summary>Kabul fiÃ…Å¸i, cihaz etiketi ve QR: iÃƒÂ§erik, gizlilik ve kiracÃ„Â± ayrÃ„Â±mÃ„Â±; HTTP ÃƒÂ¼zerinden.</summary>
 [Collection(WebCollection.Name)]
 public sealed class PrintFlowTests(TamirhaneWebFactory app)
 {
@@ -13,26 +13,26 @@ public sealed class PrintFlowTests(TamirhaneWebFactory app)
     public async Task Receipt_has_shop_customer_device_terms_signatures_and_the_tracking_qr()
     {
         var owner = await _flows.OwnerAsync("fis@example.com");
-        var order = await ReceiveWithPasscodeAsync(owner, "0532 161 61 61");
+        var order = await ReceiveWithPasscodeAsync(owner, "0812 3456 7890");
 
         var details = await BodyAsync(owner, order);
         Assert.Contains($"href=\"{order}/receipt\"", details);
         Assert.Contains($"href=\"{order}/label\"", details);
 
         var receipt = await BodyAsync(owner, order + "/receipt");
-        foreach (var expected in new[] { "Kaya Telefon", "Merkez", "Kabul fişi", "Zeynep Arslan", "0532 161 61 61", "Apple iPhone 13",
-                     "Ekran kırık", "Kasada çizik", "Kılıf", "90 gün garantilidir", "Teslim eden", "Teslim alan: Ayşe Kaya",
-                     $"src=\"{order}/qr.svg\"", "/t/", "Cihaz şifresi alındı" })
+        foreach (var expected in new[] { "Bengkel Jaya", "Merkez", "Tanda terima", "Zeynep Arslan", "0812 3456 7890", "Apple iPhone 13",
+                     "Ekran kÃ„Â±rÃ„Â±k", "Kasada ÃƒÂ§izik", "KÃ„Â±lÃ„Â±f", "bergaransi 90 hari", "Diserahkan oleh:", "Diterima oleh: Ayşe Kaya",
+                     $"src=\"{order}/qr.svg\"", "/t/", "Kode sandi perangkat dicatat" })
             Assert.Contains(expected, receipt);
-        Assert.DoesNotContain("4826", receipt); // cihaz şifresinin kendisi fişte yok
-        Assert.DoesNotContain("class=\"shell\"", receipt); // yazdırma sayfasında menü yok
+        Assert.DoesNotContain("4826", receipt); // cihaz Ã…Å¸ifresinin kendisi fiÃ…Å¸te yok
+        Assert.DoesNotContain("class=\"shell\"", receipt); // yazdÃ„Â±rma sayfasÃ„Â±nda menÃƒÂ¼ yok
     }
 
     [DockerFact]
     public async Task Label_shows_number_and_only_the_short_customer_name()
     {
         var owner = await _flows.OwnerAsync("etiket@example.com");
-        var order = await ReceiveWithPasscodeAsync(owner, "0532 171 71 71");
+        var order = await ReceiveWithPasscodeAsync(owner, "0812 3456 7890");
 
         var label = await BodyAsync(owner, order + "/label");
 
@@ -46,7 +46,7 @@ public sealed class PrintFlowTests(TamirhaneWebFactory app)
     public async Task Qr_is_an_svg_image_and_other_shops_get_nothing()
     {
         var owner = await _flows.OwnerAsync("qr-sahip@example.com");
-        var order = await ReceiveWithPasscodeAsync(owner, "0532 181 81 81");
+        var order = await ReceiveWithPasscodeAsync(owner, "0812 3456 7890");
 
         var qr = await owner.GetAsync(order + "/qr.svg");
         Assert.Equal(HttpStatusCode.OK, qr.StatusCode);
@@ -67,7 +67,7 @@ public sealed class PrintFlowTests(TamirhaneWebFactory app)
         {
             ["Input.Phone"] = phone, ["Input.CustomerName"] = "Zeynep Arslan", ["Input.KvkkConsent"] = "true",
             ["Input.DeviceKind"] = "Phone", ["Input.Brand"] = "Apple", ["Input.Model"] = "iPhone 13",
-            ["Input.Complaint"] = "Ekran kırık", ["Input.Condition"] = "Kasada çizik", ["Input.Accessories"] = "Kılıf", ["Input.Passcode"] = "4826",
+            ["Input.Complaint"] = "Ekran kÃ„Â±rÃ„Â±k", ["Input.Condition"] = "Kasada ÃƒÂ§izik", ["Input.Accessories"] = "KÃ„Â±lÃ„Â±f", ["Input.Passcode"] = "4826",
         });
         return Browser.RedirectOf(response);
     }

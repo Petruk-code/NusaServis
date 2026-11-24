@@ -88,8 +88,9 @@ public sealed class StaffInvitationTests(PostgresFixture db)
     [DockerFact]
     public async Task Address_with_an_account_leaves_the_invitation_unused()
     {
-        var shop = await RegisterAsync("dolu-sahip@example.com");
-        var token = await InviteAsync(shop, "dolu-sahip@example.com"); // sahibin kendi adresi zaten kayıtlı
+        var owner = $"dolu-sahip-{Guid.NewGuid():N}@example.com";
+        var shop = await RegisterAsync(owner);
+        var token = await InviteAsync(shop, owner); // sahibin kendi adresi zaten kayitli
 
         using (var anonymous = db.AsShop(Guid.Empty))
             Assert.Equal(AccountErrors.EmailTaken,

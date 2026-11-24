@@ -11,7 +11,7 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class TrackingDirectoryTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task Reads_shop_branch_customer_and_device_without_a_session()
@@ -21,7 +21,7 @@ public sealed class TrackingDirectoryTests(PostgresFixture db)
         using var anonymous = db.AsShop(Guid.Empty);
         var parties = await anonymous.Get<ITrackingDirectory>().GetAsync(a.Shop, a.Branch, a.Customer, a.Device, default);
 
-        Assert.Equal(new TrackingParties("Kaya Telefon", "Merkez", "Moda Cd.", "+902163456789", "Ayşe Kaya", DeviceKind.Phone, "Apple", "iPhone 13", "tr"), parties);
+        Assert.Equal(new TrackingParties("Kaya Telefon", "Merkez", "Moda Cd.", "+622163456789", "Ayşe Kaya", DeviceKind.Phone, "Apple", "iPhone 13", "tr"), parties);
     }
 
     [DockerFact]

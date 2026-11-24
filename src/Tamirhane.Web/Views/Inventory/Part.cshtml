@@ -4,7 +4,7 @@
     var part = Model.Detail.Part;
     ViewData["Title"] = part.Name;
     var isOwner = User.IsInRole("Owner");
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
     string Reason(StockMovementReason r) => r switch
     {
         StockMovementReason.Purchase => T["stock.purchase"],
@@ -147,7 +147,7 @@
                     @foreach (var m in Model.Detail.Movements)
                     {
                         <tr>
-                            <td>@m.At.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</td>
+                            <td>@m.At.ToOffset(wib).ToString("d MMMM yyyy HH:mm")</td>
                             <td>@Reason(m.Reason)</td>
                             <td class="num"><span class="@(m.Change > 0 ? "change-plus" : "change-minus")">@(m.Change > 0 ? "+" : "−")@Math.Abs(m.Change)</span></td>
                             <td>@m.By</td>

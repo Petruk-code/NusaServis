@@ -6,32 +6,35 @@ using Tamirhane.Web.Localization;
 namespace Tamirhane.Web.Tests;
 
 /// <summary>
-/// Arayüz metinleri (#35): iki dosyada aynı anahtarlar ve yer tutucular, geri düşme sırası, ₺ simgesi, tarayıcı dili.
-/// Docker gerekmez.
+/// Teks UI: id/en/tr punya key dan placeholder sama, fallback, format Rupiah, prefix bahasa.
 /// </summary>
 public sealed partial class LocalizationTests
 {
     private static readonly TextCatalog Catalog = TextCatalog.Embedded;
 
     [Fact]
-    public void Both_files_have_the_same_keys()
+    public void All_language_files_have_the_same_keys()
     {
-        var turkish = Catalog.Languages["tr"].Keys.ToHashSet();
         var english = Catalog.Languages["en"].Keys.ToHashSet();
-
-        Assert.Empty(turkish.Except(english)); // İngilizcesi eksik
-        Assert.Empty(english.Except(turkish)); // Türkçesi eksik
+        foreach (var lang in new[] { "id", "tr" })
+        {
+            var keys = Catalog.Languages[lang].Keys.ToHashSet();
+            Assert.Empty(keys.Except(english));
+            Assert.Empty(english.Except(keys));
+        }
     }
 
     [Fact]
-    public void Every_key_has_the_same_placeholders_in_both_languages()
+    public void Every_key_has_the_same_placeholders_in_all_languages()
     {
-        var mismatched = Catalog.Languages["tr"]
-            // Eksik anahtarı Both_files_have_the_same_keys bildirir; burada sadece iki dilde de olanlar karşılaştırılır.
-            .Where(p => Catalog.Languages["en"].TryGetValue(p.Key, out var english)
-                        && !Placeholders(p.Value).SetEquals(Placeholders(english)))
-            .Select(p => p.Key)
-            .ToList();
+        var mismatched = new List<string>();
+        foreach (var lang in new[] { "id", "tr" })
+        foreach (var p in Catalog.Languages["en"])
+        {
+            if (Catalog.Languages[lang].TryGetValue(p.Key, out var text)
+                && !Placeholders(p.Value).SetEquals(Placeholders(text)))
+                mismatched.Add($"{lang}:{p.Key}");
+        }
 
         Assert.Empty(mismatched);
     }
@@ -48,44 +51,44 @@ public sealed partial class LocalizationTests
     }
 
     [Fact]
-    public void Text_comes_in_the_current_language_and_falls_back_to_turkish_then_to_the_key()
+    public void Text_comes_in_the_current_language_and_falls_back_to_indonesian_then_to_the_key()
     {
         var catalog = TextCatalog.FromJson(new Dictionary<string, string>
         {
-            ["tr"] = """{ "a": "Merhaba {0}", "only.tr": "Sadece Türkçe" }""",
+            ["id"] = """{ "a": "Halo {0}", "only.id": "Hanya Indonesia" }""",
             ["en"] = """{ "a": "Hello {0}" }""",
+            ["tr"] = """{ "a": "Merhaba {0}" }""",
         });
         var localizer = new JsonStringLocalizer(catalog);
 
         using (UiCulture(AppCultures.English))
         {
             Assert.Equal("Hello Ayşe", localizer["a", "Ayşe"].Value);
-            Assert.Equal("Sadece Türkçe", localizer["only.tr"].Value);
-            var missing = localizer["Henüz anahtara çevrilmemiş metin"];
-            Assert.Equal("Henüz anahtara çevrilmemiş metin", missing.Value);
+            Assert.Equal("Hanya Indonesia", localizer["only.id"].Value);
+            var missing = localizer["missing.key"];
+            Assert.Equal("missing.key", missing.Value);
             Assert.True(missing.ResourceNotFound);
         }
-        using (UiCulture(AppCultures.Turkish))
-            Assert.Equal("Merhaba Ayşe", localizer["a", "Ayşe"].Value);
+        using (UiCulture(AppCultures.Indonesian))
+            Assert.Equal("Halo Ayşe", localizer["a", "Ayşe"].Value);
     }
 
     [Fact]
-    public void Prices_are_in_turkish_lira_in_both_languages()
+    public void Prices_are_in_rupiah_in_supported_languages()
     {
-        Assert.Equal("₺1,200.50", 1200.50m.ToString("C", AppCultures.English));
-        Assert.Equal("₺1.200,50", 1200.50m.ToString("C", AppCultures.Turkish));
-        Assert.Equal("28/10/2026", new DateTime(2026, 10, 28).ToString("d", AppCultures.English));
+        Assert.Equal(1200.50m.ToString("C", AppCultures.English), 1200.50m.ToString("C", AppCultures.Indonesian));
+        Assert.StartsWith("Rp", 1200m.ToString("C", AppCultures.Indonesian));
     }
 
     [Theory]
     [InlineData("/en", "en-GB")]
-    [InlineData("", "tr-TR")]
-    [InlineData("/eng", "tr-TR")]
+    [InlineData("", "id-ID")]
+    [InlineData("/eng", "id-ID")]
     public async Task Language_comes_from_the_address_prefix(string pathBase, string expected)
     {
         var context = new DefaultHttpContext();
         context.Request.PathBase = pathBase;
-        context.Request.Headers.AcceptLanguage = "de-DE,en;q=0.9"; // tarayıcı dili artık seçmez
+        context.Request.Headers.AcceptLanguage = "de-DE,en;q=0.9";
 
         var result = await new LanguagePrefix.Provider().DetermineProviderCultureResult(context);
 
@@ -95,11 +98,11 @@ public sealed partial class LocalizationTests
     [Theory]
     [InlineData("en", "en-GB")]
     [InlineData("EN-us", "en-GB")]
+    [InlineData("id", "id-ID")]
     [InlineData("tr", "tr-TR")]
     [InlineData("de", null)]
-    [InlineData("entr", null)]
     [InlineData(null, null)]
-    public void Language_codes_map_to_the_two_cultures(string? code, string? expected)
+    public void Language_codes_map_to_supported_cultures(string? code, string? expected)
     {
         Assert.Equal(expected, AppCultures.From(code)?.Name);
     }

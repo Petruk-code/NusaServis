@@ -4,19 +4,23 @@
 @{
     var origin = $"{Context.Request.Scheme}://{Context.Request.Host}";
     var path = Context.Request.Path.Value is "/" or null ? "/" : Context.Request.Path.Value;
-    var turkish = origin + path;
-    var english = origin + LanguagePrefix.English + (path == "/" ? "/" : path);
-    var isEnglish = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en";
-    var canonical = isEnglish ? english : turkish;
+    var defaultPath = origin + path;
+    var englishPath = origin + LanguagePrefix.English + (path == "/" ? "/" : path);
+    var lang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+    var isEnglish = lang == "en";
+    var canonical = isEnglish ? englishPath : defaultPath;
     var title = ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · Tamirhane";
     var description = ViewData["Description"] as string ?? T["seo.home.description"];
-    var image = origin + (isEnglish ? "/img/og-en.png" : "/img/og-tr.png");
+    var ogLocale = lang switch { "en" => "en_GB", "tr" => "tr_TR", _ => "id_ID" };
+    var ogLocaleAlt = isEnglish ? "id_ID" : "en_GB";
+    var image = origin + (lang == "tr" ? "/img/og-tr.png" : lang == "en" ? "/img/og-en.png" : "/img/og-id.png");
 }
 <meta name="description" content="@description" />
 <link rel="canonical" href="@canonical" />
-<link rel="alternate" hreflang="tr" href="@turkish" />
-<link rel="alternate" hreflang="en" href="@english" />
-<link rel="alternate" hreflang="x-default" href="@turkish" />
+<link rel="alternate" hreflang="id" href="@defaultPath" />
+<link rel="alternate" hreflang="tr" href="@defaultPath" />
+<link rel="alternate" hreflang="en" href="@englishPath" />
+<link rel="alternate" hreflang="x-default" href="@defaultPath" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Tamirhane" />
 <meta property="og:title" content="@title" />
@@ -25,8 +29,8 @@
 <meta property="og:image" content="@image" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:locale" content="@(isEnglish ? "en_GB" : "tr_TR")" />
-<meta property="og:locale:alternate" content="@(isEnglish ? "tr_TR" : "en_GB")" />
+<meta property="og:locale" content="@ogLocale" />
+<meta property="og:locale:alternate" content="@ogLocaleAlt" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="@title" />
 <meta name="twitter:description" content="@description" />

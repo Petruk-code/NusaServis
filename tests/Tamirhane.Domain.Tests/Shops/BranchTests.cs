@@ -4,7 +4,7 @@ namespace Tamirhane.Domain.Tests.Shops;
 
 public class BranchTests
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 26, 9, 0, 0, TimeSpan.FromHours(7));
     private static readonly Guid ShopId = Guid.NewGuid();
 
     [Fact]
@@ -67,8 +67,8 @@ public class BranchTests
     [Fact]
     public void Phone_is_stored_in_one_format_and_can_be_cleared()
     {
-        var branch = Branch.Create(ShopId, "Merkez", null, Now, "0216 345 67 89").Value;
-        Assert.Equal("+902163456789", branch.Phone);
+        var branch = Branch.Create(ShopId, "Merkez", null, Now, "0212 5550 1234").Value;
+        Assert.Equal("+6221255501234", branch.Phone);
 
         Assert.True(branch.Update("Merkez", null, " ").IsSuccess);
         Assert.Null(branch.Phone);
@@ -77,11 +77,11 @@ public class BranchTests
     [Fact]
     public void Invalid_phone_is_rejected_and_changes_nothing()
     {
-        var branch = Branch.Create(ShopId, "Merkez", "Moda Cd.", Now, "0216 345 67 89").Value;
+        var branch = Branch.Create(ShopId, "Merkez", "Moda Cd.", Now, "0212 5550 1234").Value;
 
         Assert.Equal(ShopErrors.InvalidBranchPhone, branch.Update("Kadıköy", "Yeni adres", "12ab").Error);
 
-        Assert.Equal(("Merkez", "Moda Cd.", "+902163456789"), (branch.Name, branch.Address, branch.Phone));
+        Assert.Equal(("Merkez", "Moda Cd.", "+6221255501234"), (branch.Name, branch.Address, branch.Phone));
     }
 
     [Theory]

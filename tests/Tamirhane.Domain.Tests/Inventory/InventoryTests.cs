@@ -7,7 +7,7 @@ public class InventoryTests
 {
     private static readonly Guid Staff = Guid.NewGuid();
     private static readonly Guid Branch = Guid.NewGuid();
-    private static readonly DateTimeOffset Now = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 20, 9, 0, 0, TimeSpan.FromHours(7));
 
     private static StockLevel LevelWith(Guid partId, int quantity, Guid? branch = null)
     {

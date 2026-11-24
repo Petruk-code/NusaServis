@@ -15,15 +15,15 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
         var visitor = await DemoAsync();
 
         var panel = await BodyAsync(visitor, "/panel");
-        Assert.Contains("Bu bir demo atölye", panel);
-        Assert.Contains("Demo hesabı", panel);
+        Assert.Contains("bengkel demo", panel);
+        Assert.Contains("akun demo", panel);
         Assert.DoesNotContain(".invalid", panel); // demo hesabının adresi gösterilmez
 
         var list = await BodyAsync(visitor, "/work-orders?filter=All");
-        foreach (var expected in new[] { "Asus VivoBook 15", "PlayStation 5", "MacBook Air M1", "Onay bekliyor", "Teslime hazır", "İptal" })
+        foreach (var expected in new[] { "Asus VivoBook 15", "PlayStation 5", "MacBook Air M1", "Menunggu persetujuan", "Siap diambil", "Dibatalkan" })
             Assert.Contains(expected, list);
         Assert.Contains("IP13-SCR", await BodyAsync(visitor, "/inventory"));
-        Assert.Contains("Mert Demir", await BodyAsync(visitor, "/staff"));
+        Assert.Contains("Rina Putri", await BodyAsync(visitor, "/staff"));
     }
 
     [DockerFact]
@@ -34,7 +34,7 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
 
         Assert.Equal("/settings", Browser.RedirectOf(await first.SubmitAsync("/settings", "/settings", new()
         {
-            ["Shop.Name"] = "Benim Denemem", ["Shop.WarrantyDays"] = "90", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "tr",
+            ["Shop.Name"] = "Benim Denemem", ["Shop.WarrantyDays"] = "90", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "id",
         })));
 
         Assert.Contains("Benim Denemem", await BodyAsync(first, "/settings"));
@@ -62,7 +62,7 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
         var tracking = TrackingLink().Match(await BodyAsync(visitor, awaiting + "/receipt")).Groups[1].Value;
         var page = await BodyAsync(app.NewBrowser(), tracking);
 
-        Assert.Contains("Onarımı onayla", page);
+        Assert.Contains("Setujui perbaikan", page);
     }
 
     [DockerFact]
@@ -73,7 +73,7 @@ public sealed partial class DemoFlowTests(TamirhaneWebFactory app)
 
         var page = await visitor.SubmitAsync("/staff", "/staff/invite", new() { ["Invite.Email"] = "gercek-kisi@example.com" });
 
-        Assert.Contains("Demo atölye e-posta göndermez", await page.Content.ReadAsStringAsync());
+        Assert.Contains("Bengkel demo tidak mengirim email", await page.Content.ReadAsStringAsync());
         Assert.Empty(app.Emails.SentTo("gercek-kisi@example.com"));
         Assert.Equal(before, app.Emails.Count);
     }

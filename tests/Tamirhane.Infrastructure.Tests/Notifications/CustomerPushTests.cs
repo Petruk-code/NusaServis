@@ -66,7 +66,7 @@ public sealed class WebPushOptionsTests
 [Collection(PostgresCollection.Name)]
 public sealed class CustomerPushDeliveryTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task Every_subscribed_browser_gets_an_encrypted_notification_it_can_read()
@@ -82,7 +82,7 @@ public sealed class CustomerPushDeliveryTests(PostgresFixture db)
         {
             var request = Assert.Single(db.Push.To(browser.Endpoint));
             var payload = JsonDocument.Parse(browser.Decrypt(request.Body)).RootElement;
-            Assert.Equal("Apple iPhone 13: inceleniyor", payload.GetProperty("title").GetString());
+            Assert.Equal("Apple iPhone 13: sedang dicek", payload.GetProperty("title").GetString());
             Assert.EndsWith($"/t/{order.TrackingCode}", payload.GetProperty("url").GetString());
 
             Assert.StartsWith("vapid t=", request.Authorization);
@@ -141,7 +141,7 @@ public sealed class CustomerPushDeliveryTests(PostgresFixture db)
         await NotifyAsync(shopId, order.Id, WorkOrderStatus.Delivered);
 
         var payload = JsonDocument.Parse(browser.Decrypt(Assert.Single(db.Push.To(browser.Endpoint)).Body)).RootElement;
-        Assert.Equal("Apple iPhone 13: teslim edildi", payload.GetProperty("title").GetString());
+        Assert.Equal("Apple iPhone 13: sudah diserahkan", payload.GetProperty("title").GetString());
         Assert.Equal(0, await SubscriptionCountAsync(order.Id));
     }
 

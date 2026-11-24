@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+.env.neon
 
 # User-specific files
 *.rsuser

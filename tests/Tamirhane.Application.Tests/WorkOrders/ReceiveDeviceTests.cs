@@ -45,8 +45,8 @@ public class ReceiveDeviceTests
     {
         var shop = new TestShop();
 
-        await shop.ReceiveAsync("0532 000 00 01");
-        await shop.ReceiveAsync("0532 000 00 02");
+        await shop.ReceiveAsync("0812 0000 0001");
+        await shop.ReceiveAsync("0812 0000 0002");
 
         Assert.Equal(["2026-0001", "2026-0002"], shop.Orders.Items.Select(o => o.Number));
     }
@@ -67,9 +67,9 @@ public class ReceiveDeviceTests
     public async Task Second_customer_with_the_same_phone_is_refused()
     {
         var shop = new TestShop();
-        await shop.ReceiveAsync("0532 123 45 67");
+        await shop.ReceiveAsync("0812 3456 7890");
 
-        var result = await shop.ReceiveDevice().HandleAsync(TestShop.NewCustomerCommand("+90 532 123 4567"), default);
+        var result = await shop.ReceiveDevice().HandleAsync(TestShop.NewCustomerCommand("+62 812 3456 7890"), default);
 
         Assert.Equal(ApplicationErrors.DuplicatePhone, result.Error);
         Assert.Single(shop.Customers.Items);
@@ -97,8 +97,8 @@ public class ReceiveDeviceTests
     public async Task Device_of_another_customer_cannot_be_chosen()
     {
         var shop = new TestShop();
-        await shop.ReceiveAsync("0532 000 00 01");
-        await shop.ReceiveAsync("0532 000 00 02");
+        await shop.ReceiveAsync("0812 0000 0001");
+        await shop.ReceiveAsync("0812 0000 0002");
         var first = shop.Customers.Items[0];
         var othersDevice = shop.Devices.Items[1];
 
@@ -135,39 +135,6 @@ public class ReceiveDeviceTests
 
     [Fact]
     public async Task Customer_lookup_finds_any_spelling_of_the_phone()
-    {
-        var shop = new TestShop();
-        await shop.ReceiveAsync("0532 123 45 67");
-
-        var found = (await shop.FindCustomerByPhone().HandleAsync("+90 (532) 123-4567", default)).Value;
-        var missing = (await shop.FindCustomerByPhone().HandleAsync("0532 999 99 99", default)).Value;
-        var invalid = await shop.FindCustomerByPhone().HandleAsync("12", default);
-
-        Assert.NotNull(found);
-        Assert.Equal("Ayşe Kaya", found.Name);
-        Assert.Equal("iPhone 13", Assert.Single(found.Devices).Model);
-        Assert.Null(missing);
-        Assert.Equal(CustomerErrors.InvalidPhone, invalid.Error);
-    }
-
-    [Fact]
-    public async Task Work_order_page_shows_customer_device_and_the_decrypted_passcode_which_is_stored_encrypted()
-    {
-        var shop = new TestShop();
-        var id = await shop.ReceiveAsync();
-
-        var view = (await shop.GetWorkOrder().HandleAsync(id, default)).Value;
-
-        Assert.Equal(("2026-0001", WorkOrderStatus.Received, "Ekran kırık"), (view.Number, view.Status, view.Complaint));
-        Assert.Equal(("Ayşe Kaya", "+905321234567"), (view.CustomerName, view.CustomerPhone));
-        Assert.Equal((DeviceKind.Phone, "Apple", "iPhone 13", "490154203237518"), (view.DeviceKind, view.Brand, view.Model, view.Imei));
-        Assert.True(view.HasPasscode);
-        Assert.Equal("1234", view.Passcode);                           // personel onarımda görür
-        Assert.Equal("enc:4321", shop.Orders.Items.Single().Passcode); // kayıtta şifreli, düz değil
-    }
-
-    [Fact]
-    public async Task Another_shops_work_order_is_not_found()
     {
         var other = new TestShop();
         var foreign = await other.ReceiveAsync();

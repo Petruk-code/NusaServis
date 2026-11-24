@@ -22,7 +22,8 @@ public sealed class DemoController(IStringLocalizer<SharedResource> t) : Control
     [EnableRateLimiting(DemoRateLimit.Policy)]
     public async Task<IActionResult> Start([FromServices] StartDemo start, CancellationToken ct)
     {
-        var language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "tr";
+        var twoLetter = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+        var language = twoLetter is "en" or "tr" ? twoLetter : "id";
         var result = await start.HandleAsync(language, ct);
         if (result.IsFailure)
         {

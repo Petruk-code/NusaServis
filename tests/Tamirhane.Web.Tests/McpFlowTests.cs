@@ -10,14 +10,14 @@ using static Tamirhane.Web.Tests.ShopFlows;
 namespace Tamirhane.Web.Tests;
 
 /// <summary>
-/// Yapay zekâ asistanı bağlantısı uçtan uca: dinamik kayıt → giriş + izin ekranı → kod + PKCE → token → MCP araçları.
-/// Güvenlik: token'sız ve sadece çerezle istek reddedilir, bir atölyenin token'ı başka atölyeyi görmez, iptal hemen etkili.
+/// Yapay zekÃ¢ asistanÄ± baÄŸlantÄ±sÄ± uÃ§tan uca: dinamik kayÄ±t â†’ giriÅŸ + izin ekranÄ± â†’ kod + PKCE â†’ token â†’ MCP araÃ§larÄ±.
+/// GÃ¼venlik: token'sÄ±z ve sadece Ã§erezle istek reddedilir, bir atÃ¶lyenin token'Ä± baÅŸka atÃ¶lyeyi gÃ¶rmez, iptal hemen etkili.
 /// </summary>
 [Collection(WebCollection.Name)]
 public sealed partial class McpFlowTests(TamirhaneWebFactory app)
 {
     private const string Callback = "http://127.0.0.1:33418/callback";
-    /// <summary>Testte PUBLIC_ORIGIN yok; geliştirme varsayılanı https://localhost:7071 (Program.cs).</summary>
+    /// <summary>Testte PUBLIC_ORIGIN yok; geliÅŸtirme varsayÄ±lanÄ± https://localhost:7071 (Program.cs).</summary>
     private const string Resource = "https://localhost:7071/mcp";
     private readonly ShopFlows _flows = new(app);
 
@@ -64,7 +64,7 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
     public async Task Owner_connects_and_uses_the_tools()
     {
         var owner = await _flows.OwnerAsync("mcp-sahip@example.com");
-        await ReceiveAsync(owner, "0532 701 01 01");
+        await ReceiveAsync(owner, "0812 3456 7890");
         var token = await ConnectAsync(owner, "Claude");
 
         using var tools = await CallAsync(token, "tools/list", new { });
@@ -72,18 +72,18 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
             .Select(t => t.GetProperty("name").GetString()).ToHashSet();
         Assert.Equal(new HashSet<string?> { "find_work_order", "list_work_orders", "low_stock", "change_status" }, names);
 
-        var found = await ToolAsync(token, "find_work_order", new { query = "0532 701 01 01" });
+        var found = await ToolAsync(token, "find_work_order", new { query = "0812 3456 7890" });
         var match = found.GetProperty("matches")[0];
         Assert.Equal("Received", match.GetProperty("status").GetString());
         Assert.Equal("Zeynep Arslan", match.GetProperty("customer").GetProperty("name").GetString());
-        Assert.Equal("Ekran kırık", match.GetProperty("customerReported").GetProperty("complaint").GetString());
-        Assert.False(match.TryGetProperty("passcode", out _)); // cihaz şifresi asistana hiç gitmez
+        Assert.Equal("Ekran kÄ±rÄ±k", match.GetProperty("customerReported").GetProperty("complaint").GetString());
+        Assert.False(match.TryGetProperty("passcode", out _)); // cihaz ÅŸifresi asistana hiÃ§ gitmez
         var number = match.GetProperty("number").GetString()!;
 
         var changed = await ToolAsync(token, "change_status", new { number, action = "start_diagnosis", note = "Asistandan" });
         Assert.Equal("Diagnosing", changed.GetProperty("status").GetString());
 
-        // Geçersiz geçiş domain'de reddedilir, anlamlı mesajla.
+        // GeÃ§ersiz geÃ§iÅŸ domain'de reddedilir, anlamlÄ± mesajla.
         using var invalid = await CallAsync(token, "tools/call", new { name = "change_status", arguments = new { number, action = "deliver" } });
         Assert.True(invalid.RootElement.GetProperty("result").GetProperty("isError").GetBoolean());
 
@@ -95,12 +95,12 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
     public async Task Token_of_one_shop_cannot_see_or_change_another_shops_work_orders()
     {
         var first = await _flows.OwnerAsync("mcp-birinci@example.com");
-        await ReceiveAsync(first, "0532 702 02 02");
-        var firstNumber = (await ToolAsync(await ConnectAsync(first, "Claude"), "find_work_order", new { query = "0532 702 02 02" }))
+        await ReceiveAsync(first, "0812 3456 7890");
+        var firstNumber = (await ToolAsync(await ConnectAsync(first, "Claude"), "find_work_order", new { query = "0812 3456 7890" }))
             .GetProperty("matches")[0].GetProperty("number").GetString()!;
 
         var other = await ConnectAsync(await _flows.OwnerAsync("mcp-ikinci@example.com"), "Claude");
-        var found = await ToolAsync(other, "find_work_order", new { query = "0532 702 02 02" });
+        var found = await ToolAsync(other, "find_work_order", new { query = "0812 3456 7890" });
         Assert.Empty(found.GetProperty("matches").EnumerateArray());
 
         using var change = await CallAsync(other, "tools/call", new { name = "change_status", arguments = new { number = firstNumber, action = "start_diagnosis" } });
@@ -155,7 +155,7 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task English_user_gets_the_consent_screen_under_the_language_prefix()
     {
-        // Dil çerezi İngilizce olan kullanıcı /connect/authorize'dan /en/connect/authorize'a yönlendirilir.
+        // Dil Ã§erezi Ä°ngilizce olan kullanÄ±cÄ± /connect/authorize'dan /en/connect/authorize'a yÃ¶nlendirilir.
         var owner = await _flows.OwnerAsync("mcp-english@example.com");
         var (clientId, _) = await RegisterAsync("Claude");
         var (authorize, _) = AuthorizeUrl(clientId);
@@ -169,9 +169,9 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
         Assert.StartsWith(Callback, allowed.Headers.Location?.AbsoluteUri);
     }
 
-    // --- yardımcılar ---
+    // --- yardÄ±mcÄ±lar ---
 
-    /// <summary>İstemci kaydı + izin ekranında onay + kodu token'a çevirme; erişim token'ını döner.</summary>
+    /// <summary>Ä°stemci kaydÄ± + izin ekranÄ±nda onay + kodu token'a Ã§evirme; eriÅŸim token'Ä±nÄ± dÃ¶ner.</summary>
     private async Task<string> ConnectAsync(Browser user, string appName)
     {
         var (clientId, _) = await RegisterAsync(appName);
@@ -216,7 +216,7 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
         {
             ["response_type"] = "code", ["client_id"] = clientId, ["redirect_uri"] = Callback, ["scope"] = "mcp",
             ["state"] = "durum-123", ["code_challenge"] = challenge, ["code_challenge_method"] = "S256",
-            ["resource"] = Resource, // claude.ai gibi istemciler RFC 8707 kaynak göstergesini gönderir
+            ["resource"] = Resource, // claude.ai gibi istemciler RFC 8707 kaynak gÃ¶stergesini gÃ¶nderir
         };
         return ("/connect/authorize?" + string.Join('&', query.Select(p => $"{p.Key}={Uri.EscapeDataString(p.Value)}")), verifier);
     }
@@ -247,7 +247,7 @@ public sealed partial class McpFlowTests(TamirhaneWebFactory app)
         var response = await app.NewBrowser().SendAsync(McpRequest(token, method, parameters));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
-        // Cevap düz JSON ya da SSE ("data: {...}") olabilir.
+        // Cevap dÃ¼z JSON ya da SSE ("data: {...}") olabilir.
         var json = body.TrimStart().StartsWith('{')
             ? body
             : body.Split('\n').Select(l => l.Trim()).Last(l => l.StartsWith("data:", StringComparison.Ordinal))["data:".Length..];

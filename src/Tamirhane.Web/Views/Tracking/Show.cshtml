@@ -8,14 +8,14 @@
     Layout = "_TrackingLayout";
     // Atölyenin müşteri dili; müşteri sayfadaki geçişle (?lang) değiştirebilir. Düzen de aynı dili kullanır.
     var chosen = AppCultures.From(Context.Request.Query["lang"]);
-    var culture = chosen ?? AppCultures.From(Model.Locale) ?? AppCultures.Turkish;
+    var culture = chosen ?? AppCultures.From(Model.Locale) ?? AppCultures.Indonesian;
     ViewData["Culture"] = culture;
     AppCultures.Use(culture);
     var lang = chosen?.TwoLetterISOLanguageName; // form ve yönlendirme seçimi korusun
-    var other = culture == AppCultures.English ? AppCultures.Turkish : AppCultures.English;
+    var langs = new[] { AppCultures.Indonesian, AppCultures.English, AppCultures.Turkish };
     ViewData["Title"] = $"{Model.Brand} {Model.Model}: {T.Of(Model.Status)}";
     ViewData["Manifest"] = Url.Action("Manifest", new { code = ViewContext.RouteData.Values["code"] });
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
     var lead = Model.Status switch
     {
         WorkOrderStatus.Received => T["tracking.lead.received"],
@@ -47,8 +47,15 @@
 <header class="track-board pegboard">
     <div class="track-shop">
         <p>@Model.ShopName<span>@Model.BranchName</span></p>
-        <a class="track-lang" href="@Context.Request.Path?lang=@other.TwoLetterISOLanguageName" lang="@other.TwoLetterISOLanguageName"
-           hreflang="@other.TwoLetterISOLanguageName">@(other == AppCultures.English ? "English" : "Türkçe")</a>
+        <span class="track-lang">
+            @foreach (var l in langs)
+            {
+                var code2 = l.TwoLetterISOLanguageName;
+                var label = code2 == "id" ? "Indonesia" : code2 == "en" ? "English" : "Türkçe";
+                if (culture.TwoLetterISOLanguageName == code2) { <strong>@label</strong> }
+                else { <a href="@Context.Request.Path?lang=@code2" lang="@code2" hreflang="@code2">@label</a> }
+            }
+        </span>
     </div>
     <article class="track-tag" aria-labelledby="track-device">
         <p class="track-no">@T["inventory.work_order", Model.Number]</p>
@@ -76,7 +83,7 @@
     }
     else if (Model.Status == WorkOrderStatus.Delivered && Model.WarrantyUntil is { } until)
     {
-        <p class="track-eta">@H["tracking.warranty_html", until.ToOffset(turkey).ToString("d MMMM yyyy")]</p>
+        <p class="track-eta">@H["tracking.warranty_html", until.ToOffset(wib).ToString("d MMMM yyyy")]</p>
     }
 
     @if (!Model.IsClosed && ViewData["PushKey"] is string pushKey)
@@ -157,7 +164,7 @@
                 var approved = decision.Kind == QuoteDecisionKind.Approved;
                 <p class="track-decided">
                     <span class="stamp stamp-sm@(approved ? " stamp-ok" : " stamp-warn")">@T[approved ? "quote.approved" : "quote.declined"]</span>
-                    <time datetime="@decision.At.ToString("O")">@decision.At.ToOffset(turkey).ToString("d MMMM HH:mm")</time>
+                    <time datetime="@decision.At.ToString("O")">@decision.At.ToOffset(wib).ToString("d MMMM HH:mm")</time>
                 </p>
             }
         </section>
@@ -174,7 +181,7 @@
                     <span class="track-step">@T.Of(step.Status)</span>
                     @if (step.At is { } at)
                     {
-                        <time datetime="@at.ToString("O")">@at.ToOffset(turkey).ToString("d MMM HH:mm")</time>
+                        <time datetime="@at.ToString("O")">@at.ToOffset(wib).ToString("d MMM HH:mm")</time>
                     }
                 </li>
             }
@@ -188,7 +195,7 @@
             <ul class="track-notes">
                 @foreach (var note in Model.Notes)
                 {
-                    <li><time datetime="@note.At.ToString("O")">@note.At.ToOffset(turkey).ToString("d MMM HH:mm")</time><p>@note.Text</p></li>
+                    <li><time datetime="@note.At.ToString("O")">@note.At.ToOffset(wib).ToString("d MMM HH:mm")</time><p>@note.Text</p></li>
                 }
             </ul>
         </section>

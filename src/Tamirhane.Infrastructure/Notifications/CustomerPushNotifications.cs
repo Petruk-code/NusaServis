@@ -36,6 +36,7 @@ internal sealed class CustomerPushNotifications(TamirhaneDbContext db, Backgroun
 
         var locale = await db.Shops.IgnoreQueryFilters().AsNoTracking()
             .Where(s => s.Id == order.ShopId).Select(s => s.Locale).SingleAsync(ct);
+        locale = locale == "en" ? "en" : "id";
         var device = await db.Devices.IgnoreQueryFilters().AsNoTracking()
             .Where(d => d.Id == order.DeviceId && d.ShopId == order.ShopId)
             .Select(d => d.Brand + " " + d.Model).SingleAsync(ct);

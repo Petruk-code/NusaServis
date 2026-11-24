@@ -11,8 +11,8 @@ using static Tamirhane.Web.Tests.ShopFlows;
 namespace Tamirhane.Web.Tests;
 
 /// <summary>
-/// Türe göre cihaz kabulü: işaretlenen aksesuar ve durumlar metne çevrilir, türün sormadığı alanlar (IMEI, ekran kilidi)
-/// ve başka türün seçenekleri kaydedilmez; model önerileri; takip sayfasının web uygulaması tanımı (iPhone bildirimi).
+/// TÃƒÂ¼re gÃƒÂ¶re cihaz kabulÃƒÂ¼: iÃ…Å¸aretlenen aksesuar ve durumlar metne ÃƒÂ§evrilir, tÃƒÂ¼rÃƒÂ¼n sormadÃ„Â±Ã„Å¸Ã„Â± alanlar (IMEI, ekran kilidi)
+/// ve baÃ…Å¸ka tÃƒÂ¼rÃƒÂ¼n seÃƒÂ§enekleri kaydedilmez; model ÃƒÂ¶nerileri; takip sayfasÃ„Â±nÃ„Â±n web uygulamasÃ„Â± tanÃ„Â±mÃ„Â± (iPhone bildirimi).
 /// </summary>
 [Collection(WebCollection.Name)]
 public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
@@ -24,24 +24,24 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
     {
         var owner = await _flows.OwnerAsync("tur-beyaz@example.com");
 
-        var response = await ReceiveAsync(owner, "0532 410 10 10",
+        var response = await ReceiveAsync(owner, "0812 3456 7890",
         [
             new("Input.DeviceKind", nameof(DeviceKind.LargeAppliance)), new("Input.Brand", "Arçelik"), new("Input.Model", "9 kg çamaşır"),
-            new("Input.Imei", "490154203237518"),                  // beyaz eşya IMEI sormaz
-            new("Input.AccessoryItems", "warranty_doc"), new("Input.AccessoryItems", "charger"), // şarj aleti bu türde yok
+            new("Input.Imei", "490154203237518"),                  // beyaz eÃ…Å¸ya IMEI sormaz
+            new("Input.AccessoryItems", "warranty_doc"), new("Input.AccessoryItems", "charger"), // Ã…Å¸arj aleti bu tÃƒÂ¼rde yok
             new("Input.Accessories", "giriş hortumu"),
             new("Input.ConditionItems", "water_leak"), new("Input.ConditionItems", "screen_cracked"), new("Input.ConditionItems", "<script>"),
-            new("Input.LockType", "pin"), new("Input.Passcode", "1234"), // beyaz eşya kilit sormaz
+            new("Input.LockType", "pin"), new("Input.Passcode", "1234"), // beyaz eÃ…Å¸ya kilit sormaz
         ]);
 
         var page = await BodyAsync(owner, Browser.RedirectOf(response));
-        Assert.Contains("Beyaz eşya", page);
-        Assert.Contains("Garanti belgesi, giriş hortumu", page);
-        Assert.Contains("Su kaçırıyor", page);
-        Assert.DoesNotContain("Şarj aleti", page);
-        Assert.DoesNotContain("Ekran çatlak", page);
+        Assert.Contains("Peralatan besar", page);
+        Assert.Contains("Dokumen garansi, giriş hortumu", page);
+        Assert.Contains("Bocor air", page);
+        Assert.DoesNotContain("Pengisi daya", page);
+        Assert.DoesNotContain("Layar retak", page);
         Assert.DoesNotContain("490154203237518", page);
-        Assert.DoesNotContain("Cihaz şifresi kayıtlı", page);
+        Assert.DoesNotContain("Kode sandi perangkat tersimpan", page);
     }
 
     [DockerFact]
@@ -49,23 +49,23 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
     {
         var owner = await _flows.OwnerAsync("tur-telefon@example.com");
 
-        var pin = await ReceiveAsync(owner, "0532 420 20 20",
+        var pin = await ReceiveAsync(owner, "0812 3456 7890",
         [
             new("Input.DeviceKind", nameof(DeviceKind.Phone)), new("Input.Brand", "Apple"), new("Input.Model", "iPhone 11"),
             new("Input.AccessoryItems", "case"), new("Input.AccessoryItems", "charger"),
             new("Input.LockType", "pattern"), new("Input.Passcode", "1-4-7-8-9"),
         ]);
-        var none = await ReceiveAsync(owner, "0532 420 20 21",
+        var none = await ReceiveAsync(owner, "0812 3456 7891",
         [
             new("Input.DeviceKind", nameof(DeviceKind.Phone)), new("Input.Brand", "Apple"), new("Input.Model", "iPhone 12"),
-            new("Input.LockType", "none"), new("Input.Passcode", "unutulmuş değer"),
+            new("Input.LockType", "none"), new("Input.Passcode", "unutulmuÃ…Å¸ deÃ„Å¸er"),
         ]);
 
-        // Aksesuarlar katalog sırasıyla (şarj aleti kılıftan önce), şifre türüyle birlikte; sayfada çözülmüş, kayıtta şifreli.
+        // Aksesuarlar katalog sÃ„Â±rasÃ„Â±yla (Ã…Å¸arj aleti kÃ„Â±lÃ„Â±ftan ÃƒÂ¶nce), Ã…Å¸ifre tÃƒÂ¼rÃƒÂ¼yle birlikte; sayfada ÃƒÂ§ÃƒÂ¶zÃƒÂ¼lmÃƒÂ¼Ã…Å¸, kayÃ„Â±tta Ã…Å¸ifreli.
         var pinPage = await BodyAsync(owner, Browser.RedirectOf(pin));
-        Assert.Contains("Şarj aleti, Kılıf", pinPage);
-        Assert.Contains("<code>Desen: 1-4-7-8-9</code>", pinPage);
-        Assert.DoesNotContain("Cihaz şifresini göster", await BodyAsync(owner, Browser.RedirectOf(none)));
+        Assert.Contains("Pengisi daya, Casing", pinPage);
+        Assert.Contains("<code>Pola: 1-4-7-8-9</code>", pinPage);
+        Assert.DoesNotContain("Tampilkan kode sandi perangkat", await BodyAsync(owner, Browser.RedirectOf(none)));
         var stored = Assert.Single(await PasscodesAsync("tur-telefon@example.com"));
         Assert.StartsWith("dp1:", stored);
         Assert.DoesNotContain("1-4-7-8-9", stored);
@@ -75,7 +75,7 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
     public async Task Model_suggestions_mix_the_shops_history_with_the_built_in_list()
     {
         var owner = await _flows.OwnerAsync("tur-model@example.com");
-        await ReceiveAsync(owner, "0532 430 30 30",
+        await ReceiveAsync(owner, "0812 3456 7890",
         [
             new("Input.DeviceKind", nameof(DeviceKind.LargeAppliance)), new("Input.Brand", "Arçelik"), new("Input.Model", "9 kg çamaşır"),
         ]);
@@ -86,7 +86,7 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
 
         Assert.Equal(["9 kg çamaşır"], history);
         Assert.Contains("iPhone 11", builtIn);
-        Assert.Empty(otherKind); // aynı marka, başka tür: öneri yok
+        Assert.Empty(otherKind); // aynÃ„Â± marka, baÃ…Å¸ka tÃƒÂ¼r: ÃƒÂ¶neri yok
         Assert.StartsWith("/account/login", Browser.RedirectOf(await app.NewBrowser().GetAsync("/work-orders/device-models?kind=Phone&brand=Apple")));
     }
 
@@ -94,7 +94,7 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
     public async Task Tracking_page_links_its_own_web_app_manifest()
     {
         var owner = await _flows.OwnerAsync("tur-manifest@example.com");
-        var order = await ShopFlows.ReceiveAsync(owner, "0532 440 40 40");
+        var order = await ShopFlows.ReceiveAsync(owner, "0812 3456 7890");
         var tracking = TrackingLink().Match(await BodyAsync(owner, order + "/receipt")).Groups[1].Value;
         var visitor = app.NewBrowser();
 
@@ -115,17 +115,17 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
     {
         var t = new JsonStringLocalizer(TextCatalog.Embedded);
         var previous = CultureInfo.CurrentUICulture;
-        CultureInfo.CurrentUICulture = AppCultures.Turkish;
+        CultureInfo.CurrentUICulture = AppCultures.Indonesian;
         try
         {
             var phone = DeviceCatalog.For(DeviceKind.Phone);
-            Assert.Equal("Şarj aleti, Kılıf, kırmızı kalem",
-                IntakeText.Join(t, "intake.acc.", ["case", "remote", "charger", "case"], phone.Accessories, " kırmızı kalem "));
+            Assert.Equal("Pengisi daya, Casing, pulpen merah",
+                IntakeText.Join(t, "intake.acc.", ["case", "remote", "charger", "case"], phone.Accessories, " pulpen merah "));
             Assert.Null(IntakeText.Join(t, "intake.acc.", null, phone.Accessories, "  "));
             Assert.Equal("PIN: 0000", IntakeText.Passcode(t, phone, "pin", " 0000 "));
-            Assert.Null(IntakeText.Passcode(t, phone, "fingerprint", "0000"));          // bilinmeyen tür
+            Assert.Null(IntakeText.Passcode(t, phone, "fingerprint", "0000"));
             Assert.Null(IntakeText.Passcode(t, phone, "pin", " "));
-            Assert.Equal("4826", IntakeText.Passcode(t, phone, null, "4826"));         // tür seçilmemiş eski form
+            Assert.Equal("4826", IntakeText.Passcode(t, phone, null, "4826"));
             Assert.Null(IntakeText.Passcode(t, DeviceCatalog.For(DeviceKind.Tv), "pin", "1234"));
         }
         finally
@@ -143,10 +143,10 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
         foreach (var language in new[] { "tr", "en" })
         foreach (var key in keys)
             Assert.True(TextCatalog.Embedded.Languages[language].ContainsKey(key), $"{language}: {key} yok");
-        Assert.Equal(Enum.GetValues<DeviceKind>().Order(), DeviceCatalog.Kinds.Order()); // her tür formda var
+        Assert.Equal(Enum.GetValues<DeviceKind>().Order(), DeviceCatalog.Kinds.Order()); // her tÃƒÂ¼r formda var
     }
 
-    /// <summary>Kabul formunu gönderir; aynı adlı alan birden çok kez gidebilir (işaret kutuları).</summary>
+    /// <summary>Kabul formunu gÃƒÂ¶nderir; aynÃ„Â± adlÃ„Â± alan birden ÃƒÂ§ok kez gidebilir (iÃ…Å¸aret kutularÃ„Â±).</summary>
     private static async Task<HttpResponseMessage> ReceiveAsync(Browser owner, string phone, List<KeyValuePair<string, string>> device)
     {
         var form = await BodyAsync(owner, "/work-orders/new?phone=" + Uri.EscapeDataString(phone));
@@ -154,7 +154,7 @@ public sealed partial class DeviceIntakeFlowTests(TamirhaneWebFactory app)
         [
             new("__RequestVerificationToken", Token().Match(form).Groups[1].Value),
             new("Input.Phone", phone), new("Input.CustomerName", "Zeynep Arslan"), new("Input.KvkkConsent", "true"),
-            new("Input.Complaint", "Çalışmıyor"),
+            new("Input.Complaint", "Ãƒâ€¡alÃ„Â±Ã…Å¸mÃ„Â±yor"),
             .. device,
         ];
         var response = await owner.PostAsync("/work-orders/new", new FormUrlEncodedContent(fields));

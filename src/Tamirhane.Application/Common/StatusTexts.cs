@@ -3,24 +3,24 @@ using Tamirhane.Domain.WorkOrders;
 namespace Tamirhane.Application.Common;
 
 /// <summary>
-/// Müşteriye giden durum haberlerinin metni: e-posta (#30), tarayıcı bildirimi (#31) ve WhatsApp mesajı (#32) aynısını kullanır.
-/// Başlık kısa ("teslime hazır"), açıklama takip sayfasındaki cümleyle aynı dilde.
+/// Teks notifikasi status pelanggan: email, push browser, dan pesan WhatsApp.
+/// Default Indonesia; Inggris dipakai saat locale "en".
 /// </summary>
 public static class StatusTexts
 {
     public static (string Headline, string Lead) For(WorkOrderStatus status, string locale) =>
-        locale == "en" ? English(status) : Turkish(status);
+        locale == "en" ? English(status) : Indonesian(status);
 
-    private static (string Headline, string Lead) Turkish(WorkOrderStatus status) => status switch
+    private static (string Headline, string Lead) Indonesian(WorkOrderStatus status) => status switch
     {
-        WorkOrderStatus.Received => ("teslim alındı", "Cihazın atölyede. Sırası gelince incelenecek; durumunu aşağıdaki linkten takip edebilirsin."),
-        WorkOrderStatus.Diagnosing => ("inceleniyor", "Cihazın inceleniyor. Arıza bulununca fiyatı bildireceğiz."),
-        WorkOrderStatus.AwaitingApproval => ("teklif hazır", "Onarım teklifi hazır. Takip sayfasından teklifi görüp onaylayabilir ya da reddedebilirsin."),
-        WorkOrderStatus.InRepair => ("onarılıyor", "Cihazın onarılıyor. Bitince haber vereceğiz."),
-        WorkOrderStatus.Ready => ("teslime hazır", "Cihazın hazır. Fişinle gelip teslim alabilirsin."),
-        WorkOrderStatus.Declined => ("onarım yapılmayacak", "Onarım yapılmayacak. Cihazını gelip teslim alabilirsin."),
-        WorkOrderStatus.Delivered => ("teslim edildi", "Cihazın teslim edildi. Garanti bilgisi takip sayfasında."),
-        WorkOrderStatus.Cancelled => ("iş emri iptal edildi", "Bu iş emri iptal edildi. Bir sorun olduğunu düşünüyorsan atölyeyi ara."),
+        WorkOrderStatus.Received => ("unit diterima", "Perangkat Anda sudah diterima di bengkel. Anda dapat memantau statusnya lewat tautan di bawah."),
+        WorkOrderStatus.Diagnosing => ("sedang dicek", "Perangkat Anda sedang dicek/didiagnosa. Kami akan mengabari estimasi biaya setelah masalah ditemukan."),
+        WorkOrderStatus.AwaitingApproval => ("estimasi siap", "Estimasi biaya sudah siap. Anda bisa melihat dan menyetujui atau menolaknya di halaman pelacakan."),
+        WorkOrderStatus.InRepair => ("sedang diperbaiki", "Perangkat Anda sedang diperbaiki. Kami akan mengabari saat selesai."),
+        WorkOrderStatus.Ready => ("siap diambil", "Perangkat Anda sudah siap diambil. Silakan bawa tanda terima saat pengambilan."),
+        WorkOrderStatus.Declined => ("perbaikan tidak dilanjutkan", "Perbaikan tidak dilanjutkan. Anda dapat mengambil perangkat Anda di bengkel."),
+        WorkOrderStatus.Delivered => ("sudah diserahkan", "Perangkat Anda sudah diserahkan. Informasi garansi tersedia di halaman pelacakan."),
+        WorkOrderStatus.Cancelled => ("order servis dibatalkan", "Order servis ini dibatalkan. Jika ada kendala, silakan hubungi bengkel."),
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
     };
 

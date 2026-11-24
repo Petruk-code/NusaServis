@@ -1,10 +1,9 @@
-using System.Net;
+﻿using System.Net;
 
 namespace Tamirhane.Web.Tests;
 
 /// <summary>
-/// Dil adreste (#42): önsüz adres Türkçe, /en İngilizce. Seçilen dil çerezde; önsüz bir sayfa açılınca seçilen dilin
-/// adresine yönlendirir. Tarayıcı dili seçmez (arama motoru her adreste tek dil görsün). Sadece site içine dönüş.
+/// Language prefix: default Indonesian (no prefix), English /en. Choice is stored in cookie and only local redirects.
 /// </summary>
 [Collection(WebCollection.Name)]
 public sealed class LanguageFlowTests(TamirhaneWebFactory app)
@@ -23,7 +22,6 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains("httponly", cookie, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("path=/", cookie, StringComparison.OrdinalIgnoreCase);
 
-        // Seçim hatırlanır: önsüz adres İngilizce adrese yönlendirir (sorgu dizesi korunur).
         Assert.Equal("/en/account/login?ReturnUrl=%2Fpanel", Browser.RedirectOf(await browser.GetAsync("/account/login?ReturnUrl=%2Fpanel")));
         var page = await browser.GetAsync("/en/account/login");
         Assert.Equal("en-GB", page.Content.Headers.ContentLanguage.Single());
@@ -35,34 +33,34 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         using var request = new HttpRequestMessage(HttpMethod.Get, "/account/login");
         request.Headers.AcceptLanguage.ParseAdd("en-US");
 
-        var turkish = await app.NewBrowser().SendAsync(request);
+        var indonesian = await app.NewBrowser().SendAsync(request);
         var english = await app.NewBrowser().GetAsync("/en/account/login");
 
-        Assert.Equal(HttpStatusCode.OK, turkish.StatusCode);
-        Assert.Equal("tr-TR", turkish.Content.Headers.ContentLanguage.Single());
+        Assert.Equal(HttpStatusCode.OK, indonesian.StatusCode);
+        Assert.Equal("id-ID", indonesian.Content.Headers.ContentLanguage.Single());
         Assert.Equal("en-GB", english.Content.Headers.ContentLanguage.Single());
     }
 
     [DockerFact]
-    public async Task Turkish_is_the_default()
+    public async Task Indonesian_is_the_default()
     {
         var page = await app.NewBrowser().GetAsync("/account/login");
 
-        Assert.Equal("tr-TR", page.Content.Headers.ContentLanguage.Single());
+        Assert.Equal("id-ID", page.Content.Headers.ContentLanguage.Single());
     }
 
     [DockerFact]
-    public async Task Choosing_turkish_on_an_english_page_returns_to_the_plain_address()
+    public async Task Choosing_indonesian_on_an_english_page_returns_to_the_plain_address()
     {
         var browser = await EnglishAsync(app.NewBrowser(), "/account/login");
 
         var response = await browser.SubmitAsync("/en/account/login", "/en/language",
-            new() { ["culture"] = "tr", ["returnUrl"] = "/account/login" });
+            new() { ["culture"] = "id", ["returnUrl"] = "/account/login" });
 
         Assert.Equal("/account/login", Browser.RedirectOf(response));
-        var page = await browser.GetAsync("/account/login"); // artık yönlendirme yok
+        var page = await browser.GetAsync("/account/login");
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
-        Assert.Equal("tr-TR", page.Content.Headers.ContentLanguage.Single());
+        Assert.Equal("id-ID", page.Content.Headers.ContentLanguage.Single());
     }
 
     [DockerFact]
@@ -82,12 +80,11 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         var page = await (await browser.GetAsync("/en/account/login")).Content.ReadAsStringAsync();
         Assert.Contains("<html lang=\"en\">", page);
         Assert.Contains("<h1>Sign in</h1>", page);
-        Assert.Contains(">Türkçe</button>", page); // geri dönüş düğmesi
-        Assert.Contains("action=\"/en/account/login\"", page); // linkler ve formlar /en ile
+        Assert.Contains(">Indonesia</button>", page);
+        Assert.Contains("action=\"/en/account/login\"", page);
         Assert.Contains("href=\"/en/account/register\"", page);
-        Assert.DoesNotContain("Giriş yap", page);
+        Assert.DoesNotContain(">Masuk</h1>", page);
 
-        // Doğrulama mesajı (DataAnnotations) ve denetleyicinin hata metni de İngilizce.
         var empty = await browser.SubmitAsync("/en/account/login", "/en/account/login", new() { ["Email"] = "", ["Password"] = "x" });
         Assert.Contains("Enter your email address.", await empty.Content.ReadAsStringAsync());
         var wrong = await browser.SubmitAsync("/en/account/login", "/en/account/login",
@@ -108,9 +105,8 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains(">Dashboard</a>", english);
         Assert.Contains(">Sign out</button>", english);
 
-        // Başka bir kullanıcı Türkçe görmeye devam eder: seçim kişinin çerezinde, sunucuda ortak bir ayar değil.
         var other = await flows.OwnerAsync("dil-sahibi-2@example.com");
-        Assert.Contains("<h1>Bugün</h1>", await ShopFlows.BodyAsync(other, "/panel"));
+        Assert.Contains("<h1>Dasbor</h1>", await ShopFlows.BodyAsync(other, "/panel"));
     }
 
     [DockerFact]
@@ -118,18 +114,16 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
     {
         var flows = new ShopFlows(app);
         var owner = await flows.OwnerAsync("dil-is-emri@example.com");
-        var order = await ShopFlows.ReceiveAsync(owner, "0532 211 01 01");
+        var order = await ShopFlows.ReceiveAsync(owner, "0812 2110 0101");
         await EnglishAsync(owner, "/panel");
 
-        // Durum, süzgeç ve bekleme süresi sözlükten; müşterinin yazdığı metin olduğu gibi. Linkler /en ile.
         var list = await ShopFlows.BodyAsync(owner, "/en/work-orders");
-        foreach (var expected in new[] { ">Checked in<", ">Open</a>", ">Over 30 days</a>", "today", "Ekran kırık", "href=\"/en" + order + "\"" })
+        foreach (var expected in new[] { ">Checked in<", ">Open</a>", ">Over 30 days</a>", "today", "Ekran kÄ±rÄ±k", "href=\"/en" + order + "\"" })
             Assert.Contains(expected, list);
-        Assert.DoesNotContain("Teslim alındı", list);
+        Assert.DoesNotContain("Unit diterima", list);
 
-        // Kullanım senaryosunun hata kodu da İngilizce metne çevrilir.
         var intake = await ShopFlows.BodyAsync(owner, "/en/work-orders/new?phone=12345");
-        Assert.Contains("Enter the phone like 0532 123 45 67.", intake);
+        Assert.Contains("Enter the phone like 0812 3456 7890.", intake);
         Assert.Contains("Find customer", intake);
         Assert.Contains(">Check in a device</h1>", await ShopFlows.BodyAsync(owner, "/en/work-orders/new"));
     }
@@ -138,21 +132,19 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
     public async Task Work_order_page_follows_the_staff_language_but_the_receipt_uses_the_customer_language()
     {
         var flows = new ShopFlows(app);
-        var owner = await flows.OwnerAsync("dil-fis@example.com"); // atölyenin müşteri dili Türkçe
-        var order = await ShopFlows.ReceiveAsync(owner, "0532 212 01 01");
+        var owner = await flows.OwnerAsync("dil-fis@example.com");
+        var order = await ShopFlows.ReceiveAsync(owner, "0812 2120 0101");
         await EnglishAsync(owner, "/panel");
 
         var page = await ShopFlows.BodyAsync(owner, "/en" + order);
         foreach (var expected in new[] { ">Next step</h2>", ">Start diagnosis</button>", ">Quote</h2>", ">Payments</h2>", ">Print receipt</a>" })
             Assert.Contains(expected, page);
-        Assert.Contains("hx-post=\"/en" + order + "/steps\"", page); // htmx yanıtı da İngilizce gelsin
-        Assert.DoesNotContain("Sıradaki adım", page);
+        Assert.Contains("hx-post=\"/en" + order + "/steps\"", page);
 
-        // Fiş müşteriye verilir: kâğıt Türkçe; araç çubuğu personelin dilinde kalır (görünümdeki dil değişikliği düzene sızmaz).
         var receipt = await ShopFlows.BodyAsync(owner, "/en" + order + "/receipt");
-        Assert.Contains("<article class=\"sheet receipt\" lang=\"tr\"", receipt);
-        Assert.Contains("<span>Kabul fişi</span>", receipt);
-        Assert.Contains("Teslim eden: Zeynep Arslan", receipt);
+        Assert.Contains("<article class=\"sheet receipt\" lang=\"id\"", receipt);
+        Assert.Contains("<span>Nama</span>", receipt);
+        Assert.Contains("Diserahkan oleh: Zeynep Arslan", receipt);
         Assert.Contains(">Back to the work order</a>", receipt);
         Assert.Contains("<html lang=\"en\">", receipt);
     }
@@ -165,14 +157,14 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         await EnglishAsync(owner, "/panel");
 
         Assert.Contains(">New part</h2>", await ShopFlows.BodyAsync(owner, "/en/inventory"));
-        var part = await owner.SubmitAsync("/en/inventory", "/en/inventory", new() { ["NewPart.Sku"] = "", ["NewPart.Name"] = "Ekran" });
-        Assert.Contains("Enter the part code (e.g. IP13-SCR).", await part.Content.ReadAsStringAsync()); // DataAnnotations
+        var part = await owner.SubmitAsync("/en/inventory", "/en/inventory", new() { ["NewPart.Sku"] = "", ["NewPart.Name"] = "Layar" });
+        Assert.Contains("Enter the part code (e.g. IP13-SCR).", await part.Content.ReadAsStringAsync());
 
         Assert.Contains(">Invite a technician</h2>", await ShopFlows.BodyAsync(owner, "/en/staff"));
 
         var settings = await owner.SubmitAsync("/en/settings", "/en/settings", new()
         {
-            ["Shop.Name"] = "Kaya Telefon", ["Shop.WarrantyDays"] = "5000", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "tr",
+            ["Shop.Name"] = "Bengkel Jaya", ["Shop.WarrantyDays"] = "5000", ["Shop.DefaultVatRate"] = "20", ["Shop.Locale"] = "id",
         });
         var html = await settings.Content.ReadAsStringAsync();
         Assert.Contains("The warranty period must be between 0 and 3650 days.", html);
@@ -192,19 +184,17 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
         Assert.Contains("/en/account/confirm-email?", new ShopFlows(app).LinkIn("dil-eposta@example.com", "/account/confirm-email"));
     }
 
-    /// <summary>
-    /// __Host- önekli çerez tarayıcıda ancak Path=/ ise kabul edilir. Test istemcisi bu kuralı uygulamadığı için burada
-    /// açıkça denetlenir: İngilizce (/en) sayfada da çerezler kök yolda olmalı, yoksa formlar ve giriş çalışmaz.
-    /// </summary>
     [DockerFact]
     public async Task Cookies_on_english_pages_use_the_root_path()
     {
         var browser = app.NewBrowser();
         var page = await browser.GetAsync("/en/account/login");
+        var pageCookies = page.Headers.TryGetValues("Set-Cookie", out var initial) ? initial.ToList() : [];
         var login = await browser.SubmitAsync("/en/account/login", "/en/account/login",
             new() { ["Email"] = "yok-boyle-biri@example.com", ["Password"] = "yanlis-sifre-123" });
 
-        var cookies = page.Headers.GetValues("Set-Cookie").Concat(login.Headers.TryGetValues("Set-Cookie", out var more) ? more : []).ToList();
+        var cookies = (login.Headers.TryGetValues("Set-Cookie", out var more) ? more.ToList() : [])
+            .Concat(pageCookies).ToList();
         Assert.Contains(cookies, c => c.StartsWith("__Host-tamirhane-csrf="));
         foreach (var cookie in cookies.Where(c => c.StartsWith("__Host-")))
             Assert.Contains("path=/;", cookie.ToLowerInvariant() + ";");
@@ -222,7 +212,6 @@ public sealed class LanguageFlowTests(TamirhaneWebFactory app)
                      response.Headers.GetValues("Set-Cookie").Any(c => c.StartsWith("__Host-tamirhane-lang=")));
     }
 
-    /// <summary>Dil düğmesine basar; formun CSRF token'ı verilen (Türkçe) sayfadan alınır.</summary>
     private static async Task<Browser> EnglishAsync(Browser browser, string page)
     {
         var response = await browser.SubmitAsync(page, "/language", new() { ["culture"] = "en", ["returnUrl"] = "/" });

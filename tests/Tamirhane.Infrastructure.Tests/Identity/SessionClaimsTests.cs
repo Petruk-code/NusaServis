@@ -10,12 +10,13 @@ namespace Tamirhane.Infrastructure.Tests.Identity;
 [Collection(PostgresCollection.Name)]
 public sealed class SessionClaimsTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task Session_carries_shop_staff_and_role()
     {
-        var (shop, staff, user) = await RegisterAsync("oturum@example.com", StaffRole.Owner);
+        var email = $"oturum-{Guid.NewGuid():N}@example.com";
+        var (shop, staff, user) = await RegisterAsync(email, StaffRole.Owner);
 
         var current = await CurrentUserFor(user);
 
@@ -28,7 +29,7 @@ public sealed class SessionClaimsTests(PostgresFixture db)
     [DockerFact]
     public async Task Technician_session_is_not_owner()
     {
-        var (_, _, user) = await RegisterAsync("teknisyen@example.com", StaffRole.Technician);
+        var (_, _, user) = await RegisterAsync($"teknisyen-{Guid.NewGuid():N}@example.com", StaffRole.Technician);
 
         Assert.False((await CurrentUserFor(user)).IsOwner);
     }
@@ -37,7 +38,8 @@ public sealed class SessionClaimsTests(PostgresFixture db)
     public async Task Account_without_staff_record_has_no_shop()
     {
         using var scope = db.AsShop(Guid.Empty);
-        var user = new ApplicationUser { UserName = "personelsiz@example.com", Email = "personelsiz@example.com" };
+        var email = $"personelsiz-{Guid.NewGuid():N}@example.com";
+        var user = new ApplicationUser { UserName = email, Email = email };
         Assert.True((await scope.Users.CreateAsync(user)).Succeeded);
 
         var current = await CurrentUserFor(user);

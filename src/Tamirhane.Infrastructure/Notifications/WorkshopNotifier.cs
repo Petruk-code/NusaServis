@@ -9,6 +9,7 @@ using Tamirhane.Infrastructure.Email;
 using Tamirhane.Infrastructure.Identity;
 using Tamirhane.Infrastructure.Persistence;
 
+
 namespace Tamirhane.Infrastructure.Notifications;
 
 /// <summary>
@@ -51,10 +52,20 @@ internal sealed class WorkshopEmails(TamirhaneDbContext db, EmailOutbox outbox, 
             .ToListAsync(ct);
 
         var link = new Uri(options.PublicOrigin, $"/work-orders/{order.Id}");
-        var total = QuoteTotals.Of(order.QuoteLines).Total.ToString("C", CultureInfo.GetCultureInfo("tr-TR"));
-        var at = decision.At.ToOffset(TimeSpan.FromHours(3));
+        var locale = shop.Locale == "en" ? "en" : "id";
+        var culture = CultureInfo.GetCultureInfo(locale == "en" ? "en-GB" : "id-ID");
+        if (culture.NumberFormat.CurrencyDecimalDigits != 0)
+        {
+            culture = (CultureInfo)culture.Clone();
+            culture.NumberFormat.CurrencySymbol = "Rp ";
+            culture.NumberFormat.CurrencyDecimalDigits = 0;
+            culture.NumberFormat.CurrencyGroupSeparator = ".";
+            culture.NumberFormat.CurrencyDecimalSeparator = ",";
+        }
+        var total = QuoteTotals.Of(order.QuoteLines).Total.ToString("C", culture);
+        var at = decision.At.ToOffset(TimeSpan.FromHours(7));
         foreach (var to in recipients)
-            outbox.Enqueue(QuoteDecisionEmail(to, shop.Locale, order.Number, device, decision, total, at, link), "teklif kararı");
+            outbox.Enqueue(QuoteDecisionEmail(to, locale, order.Number, device, decision, total, at, link), "keputusan estimasi");
     }
 
     internal static EmailMessage QuoteDecisionEmail(
@@ -74,14 +85,14 @@ internal sealed class WorkshopEmails(TamirhaneDbContext db, EmailOutbox outbox, 
                 "You get this email because you are an owner of this shop or work at this branch.");
         }
 
-        var tr = at.ToString("d MMMM HH:mm", CultureInfo.GetCultureInfo("tr-TR"));
-        return EmailLayout.Build(to, "tr",
-            approved ? $"{number}: müşteri onarımı onayladı" : $"{number}: müşteri onarım istemedi",
+        var id = at.ToString("d MMMM HH:mm", CultureInfo.GetCultureInfo("id-ID"));
+        return EmailLayout.Build(to, "id",
+            approved ? $"{number}: pelanggan menyetujui perbaikan" : $"{number}: pelanggan menolak perbaikan",
             [approved
-                ? $"Müşteri, {device} için verdiğin {total} teklifi takip sayfasından onayladı ({tr}, {decision.ByName} adına)."
-                : $"Müşteri, {device} için verdiğin {total} teklifi takip sayfasından reddetti ({tr}, {decision.ByName} adına).",
-             approved ? "Onarıma başlayabilirsin." : "Cihazı onarmadan teslim et; inceleme ücreti varsa iş emrinde görünür."],
-            new EmailAction("İş emrini aç", link),
-            "Bu e-postayı atölyenin sahibi ya da bu şubenin personeli olduğun için alıyorsun.");
+                ? $"Pelanggan menyetujui estimasi biaya {total} untuk {device} melalui halaman pelacakan ({id}, atas nama {decision.ByName})."
+                : $"Pelanggan menolak estimasi biaya {total} untuk {device} melalui halaman pelacakan ({id}, atas nama {decision.ByName}).",
+             approved ? "Anda dapat mulai perbaikan." : "Kembalikan perangkat tanpa perbaikan; biaya pengecekan jika ada akan terlihat di order servis."],
+            new EmailAction("Buka order servis", link),
+            "Anda menerima email ini karena Anda pemilik bengkel atau staf di cabang ini.");
     }
 }

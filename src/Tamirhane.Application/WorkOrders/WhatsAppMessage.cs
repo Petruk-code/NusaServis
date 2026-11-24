@@ -21,9 +21,13 @@ public static class WhatsAppMessage
     {
         var (_, lead) = StatusTexts.For(status, locale);
         var first = FirstName(customerName);
-        return locale == "en"
-            ? $"Hello {first},\n{lead}\n{device}, work order {number}\nTrack your repair: {trackingLink.AbsoluteUri}"
-            : $"Merhaba {first},\n{lead}\n{device}, iş emri {number}\nOnarımı takip et: {trackingLink.AbsoluteUri}";
+        if (locale == "en")
+            return $"Hello {first},\n{lead}\n{device}, work order {number}\nTrack your repair: {trackingLink.AbsoluteUri}";
+
+        if (locale == "id")
+            return $"Halo {first},\n{lead}\n{device}, order servis {number}\nLacak servis Anda: {trackingLink.AbsoluteUri}";
+
+        return $"Merhaba {first},\n{lead}\n{device}, iş emri {number}\nOnarımı takip et: {trackingLink.AbsoluteUri}";
     }
 
     private static string Digits(string phoneE164)

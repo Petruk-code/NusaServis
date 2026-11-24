@@ -11,7 +11,7 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class TenantFilterTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 21, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 21, 9, 0, 0, TimeSpan.FromHours(7));
 
     private readonly Guid _shopA = Guid.NewGuid();
     private readonly Guid _shopB = Guid.NewGuid();

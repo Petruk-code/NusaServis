@@ -8,12 +8,12 @@ namespace Tamirhane.Infrastructure.Tests.Persistence;
 [Collection(PostgresCollection.Name)]
 public sealed class ShopPersistenceTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 25, 9, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task New_shop_with_owner_and_account_is_saved_without_a_session()
     {
-        var (shop, staff) = await RegisterAsync("kaya@example.com");
+        var (shop, staff) = await RegisterAsync($"kaya-{Guid.NewGuid():N}@example.com");
 
         using var own = db.AsShop(shop.Id);
         Assert.Equal("Kaya Telefon", (await own.Db.Shops.SingleAsync()).Name);
@@ -27,10 +27,11 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
     [DockerFact]
     public async Task Staff_cannot_be_added_to_an_existing_shop_from_another_session()
     {
-        var (shop, _) = await RegisterAsync("demir@example.com");
+        var (shop, _) = await RegisterAsync($"demir-{Guid.NewGuid():N}@example.com");
 
         using var anonymous = db.AsShop(Guid.Empty);
-        var user = new ApplicationUser { UserName = "yabanci@example.com", Email = "yabanci@example.com" };
+        var yabanci = $"yabanci-{Guid.NewGuid():N}@example.com";
+        var user = new ApplicationUser { UserName = yabanci, Email = yabanci };
         anonymous.Db.Users.Add(user);
         anonymous.Db.Staff.Add(Staff.Create(shop.Id, user.Id, StaffRole.Owner, "Yabancı", Guid.NewGuid()).Value);
 
@@ -40,15 +41,17 @@ public sealed class ShopPersistenceTests(PostgresFixture db)
     [DockerFact]
     public async Task Email_is_unique_even_without_the_identity_check()
     {
-        await RegisterAsync("ayni@example.com");
+        var email = $"ayni-{Guid.NewGuid():N}@example.com";
+        await RegisterAsync(email);
 
-        await Assert.ThrowsAsync<DbUpdateException>(() => RegisterAsync("ayni@example.com"));
+        await Assert.ThrowsAsync<DbUpdateException>(() => RegisterAsync(email));
     }
 
     [DockerFact]
     public async Task Uncommitted_transaction_leaves_nothing_behind()
     {
-        var user = new ApplicationUser { UserName = "yarim@example.com", Email = "yarim@example.com" };
+        var yarim = $"yarim-{Guid.NewGuid():N}@example.com";
+        var user = new ApplicationUser { UserName = yarim, Email = yarim };
         var shop = Shop.Create("Yarım Kayıt", "tr", Now).Value;
 
         using (var anonymous = db.AsShop(Guid.Empty))

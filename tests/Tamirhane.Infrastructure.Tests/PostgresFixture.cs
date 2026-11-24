@@ -42,18 +42,30 @@ public sealed class PostgresFixture : IAsyncLifetime
             "mailto:test@tamirhane.test");
     }
 
+    private string? _connectionString;
+    private string _schema = "";
+
     public async Task InitializeAsync()
     {
-        // Docker yoksa testler [DockerFact] ile atlanır; xUnit fixture'ı yine de kurar, burada hiçbir şey yapılmaz.
+        // Docker yoksa veya external DB verilmişse ona göre davran.
         if (!DockerEngine.IsAvailable)
             return;
 
-        _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
-        await _container.StartAsync();
+        if (DockerEngine.UseExternalDatabase)
+        {
+            _schema = "test_" + Guid.NewGuid().ToString("N");
+            _connectionString = DockerEngine.WithSchema(_schema);
+        }
+        else
+        {
+            _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
+            await _container.StartAsync();
+            _connectionString = _container.GetConnectionString();
+        }
 
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddInfrastructure(_container.GetConnectionString());
+        services.AddInfrastructure(_connectionString!);
         services.AddAccounts(new AccountOptions(PublicOrigin, null, AccountOptions.DefaultFrom));
         services.AddSingleton<IEmailSender>(Emails); // gönderilen e-postalar testte okunur
         services.AddWebPush(PushOptions);
@@ -64,6 +76,8 @@ public sealed class PostgresFixture : IAsyncLifetime
         _services = services.BuildServiceProvider();
 
         using var scope = AsShop(Guid.Empty);
+        if (!string.IsNullOrEmpty(_schema))
+            await scope.Db.Database.ExecuteSqlRawAsync($"CREATE SCHEMA IF NOT EXISTS \"{_schema}\"");
         await scope.Db.Database.MigrateAsync();
 
         // Burada web sunucusu yok: arka plan işçisini (e-posta kuyruğu) elle başlat.
@@ -75,11 +89,22 @@ public sealed class PostgresFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        if (_container is null)
+        if (_services is null)
             return;
 
+        if (!string.IsNullOrEmpty(_schema))
+        {
+            try
+            {
+                using var scope = AsShop(Guid.Empty);
+                await scope.Db.Database.ExecuteSqlRawAsync($"DROP SCHEMA IF EXISTS \"{_schema}\" CASCADE");
+            }
+            catch { /* best effort cleanup */ }
+        }
+
         await _services.DisposeAsync();
-        await _container.DisposeAsync();
+        if (_container is not null)
+            await _container.DisposeAsync();
     }
 
     /// <summary>Arka plan kuyruğundaki bütün işler (ve tekrar denemeleri) bitene kadar bekler.</summary>

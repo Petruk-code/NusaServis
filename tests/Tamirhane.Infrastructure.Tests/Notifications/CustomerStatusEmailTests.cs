@@ -13,17 +13,17 @@ public sealed class CustomerStatusEmailTests
 
     [Theory]
     [MemberData(nameof(AllStatuses))]
-    public void Every_status_has_a_turkish_and_an_english_email(WorkOrderStatus status)
+    public void Every_status_has_an_indonesian_and_an_english_email(WorkOrderStatus status)
     {
-        foreach (var locale in new[] { "tr", "en" })
+        foreach (var locale in new[] { "id", "en" })
         {
-            var mail = CustomerStatusEmails.Build("ayse@example.com", locale, "Kaya Telefon", "2026-0001", "Apple iPhone 13",
-                status, "Moda Cd. 5", "+902163456789", Link);
+            var mail = CustomerStatusEmails.Build("budi@example.com", locale, "Bengkel Budi", "2026-0001", "Apple iPhone 13",
+                status, "Jl. Melati 5", "+6281234567890", Link);
 
             Assert.StartsWith("Apple iPhone 13: ", mail.Subject);
             Assert.Contains(Link.AbsoluteUri, mail.Text);
             Assert.Contains("2026-0001", mail.Text);
-            Assert.Equal("Kaya Telefon", mail.FromName); // müşteri e-postayı atölyenin adıyla görür
+            Assert.Equal("Bengkel Budi", mail.FromName);
             Assert.Contains($"lang=\"{locale}\"", mail.Html);
         }
     }
@@ -33,20 +33,20 @@ public sealed class CustomerStatusEmailTests
     [Fact]
     public void Ready_email_has_the_pick_up_address_and_phone()
     {
-        var mail = CustomerStatusEmails.Build("a@example.com", "tr", "Kaya Telefon", "2026-0001", "Apple iPhone 13",
-            WorkOrderStatus.Ready, "Moda Cd. 5", "+902163456789", Link);
+        var mail = CustomerStatusEmails.Build("a@example.com", "id", "Bengkel Budi", "2026-0001", "Apple iPhone 13",
+            WorkOrderStatus.Ready, "Jl. Melati 5", "+6281234567890", Link);
 
-        Assert.Equal("Apple iPhone 13: teslime hazır", mail.Subject);
-        Assert.Contains("Teslim adresi: Moda Cd. 5 · 0216 345 67 89", mail.Text);
+        Assert.Equal("Apple iPhone 13: siap diambil", mail.Subject);
+        Assert.Contains("Alamat pengambilan: Jl. Melati 5 · 0812 3456 7890", mail.Text);
     }
 
     [Fact]
     public void Other_statuses_do_not_repeat_the_address()
     {
-        var mail = CustomerStatusEmails.Build("a@example.com", "tr", "Kaya Telefon", "2026-0001", "Apple iPhone 13",
-            WorkOrderStatus.InRepair, "Moda Cd. 5", "+902163456789", Link);
+        var mail = CustomerStatusEmails.Build("a@example.com", "id", "Bengkel Budi", "2026-0001", "Apple iPhone 13",
+            WorkOrderStatus.InRepair, "Jl. Melati 5", "+6281234567890", Link);
 
-        Assert.DoesNotContain("Moda Cd.", mail.Text);
+        Assert.DoesNotContain("Jl. Melati", mail.Text);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class CustomerStatusEmailTests
 [Collection(PostgresCollection.Name)]
 public sealed class CustomerStatusEmailDeliveryTests(PostgresFixture db)
 {
-    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(3));
+    private static readonly DateTimeOffset Now = new(2026, 10, 27, 10, 0, 0, TimeSpan.FromHours(7));
 
     [DockerFact]
     public async Task Customer_with_an_email_gets_the_status_with_the_tracking_link()
@@ -73,9 +73,9 @@ public sealed class CustomerStatusEmailDeliveryTests(PostgresFixture db)
         Notify(shopId, order, WorkOrderStatus.Received);
 
         var mail = Assert.Single(db.Emails.SentTo("durum1@example.com"));
-        Assert.Equal("Apple iPhone 13: teslim alındı", mail.Subject);
+        Assert.Equal("Apple iPhone 13: unit diterima", mail.Subject);
         Assert.Contains($"/t/{order.TrackingCode}", mail.Text);
-        Assert.Equal("Kaya Telefon", mail.FromName);
+        Assert.Equal("Bengkel Budi", mail.FromName);
     }
 
     [DockerFact]
@@ -132,10 +132,10 @@ public sealed class CustomerStatusEmailDeliveryTests(PostgresFixture db)
 
     private async Task<(Guid ShopId, WorkOrder Order)> SeedAsync(string? email, bool demo = false)
     {
-        var shop = (demo ? Shop.CreateDemo("Kaya Telefon", "tr", Now) : Shop.Create("Kaya Telefon", "tr", Now)).Value;
-        var branch = Branch.Create(shop.Id, "Merkez", "Moda Cd. 5", Now, "0216 345 67 89").Value;
-        var phone = $"0532 {Random.Shared.Next(100, 999)} {Random.Shared.Next(10, 99)} {Random.Shared.Next(10, 99)}";
-        var customer = Customer.Create(shop.Id, "Ayşe Kaya", phone, email, true, Now).Value;
+        var shop = (demo ? Shop.CreateDemo("Bengkel Budi", "id", Now) : Shop.Create("Bengkel Budi", "id", Now)).Value;
+        var branch = Branch.Create(shop.Id, "Cabang Utama", "Jl. Melati 5", Now, "0212 5550 1234").Value;
+        var phone = $"0812 {Random.Shared.Next(1000, 9999)} {Random.Shared.Next(1000, 9999)}";
+        var customer = Customer.Create(shop.Id, "Budi Santoso", phone, email, true, Now).Value;
         var device = Device.Create(customer, DeviceKind.Phone, "Apple", "iPhone 13", null, null).Value;
         using (var anonymous = db.AsShop(Guid.Empty))
         {

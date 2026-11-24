@@ -13,7 +13,7 @@
         <strong class="label-no">@Model.Number</strong>
         <span>@Model.Brand @Model.Model</span>
         <span>@Model.CustomerShortName</span>
-        <span>@Model.CreatedAt.ToOffset(TimeSpan.FromHours(3)).ToString("dd.MM.yyyy")</span>
+        <span>@Model.CreatedAt.ToOffset(TimeSpan.FromHours(7)).ToString("dd.MM.yyyy")</span>
     </div>
     <img src="/work-orders/@id/qr.svg" alt="@T["receipt.qr"]" width="120" height="120" />
 </article>

@@ -7,9 +7,9 @@
     ViewData["Title"] = T["receipt.title", Model.Number].Value;
     ViewData["Back"] = Url.Action("Details", new { id = ViewContext.RouteData.Values["id"] });
     ViewData["Hint"] = T["receipt.hint"].Value;
-    var paper = AppCultures.From(Model.Locale) ?? AppCultures.Turkish;
+    var paper = AppCultures.From(Model.Locale) ?? AppCultures.Indonesian;
     AppCultures.Use(paper);
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
     var id = ViewContext.RouteData.Values["id"];
 }
 
@@ -28,7 +28,7 @@
         <div class="receipt-no">
             <span>@T["receipt.name"]</span>
             <strong>@Model.Number</strong>
-            <span>@Model.CreatedAt.ToOffset(turkey).ToString("d MMMM yyyy HH:mm")</span>
+            <span>@Model.CreatedAt.ToOffset(wib).ToString("d MMMM yyyy HH:mm")</span>
         </div>
     </header>
 

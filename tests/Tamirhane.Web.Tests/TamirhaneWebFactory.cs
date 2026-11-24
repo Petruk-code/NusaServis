@@ -21,18 +21,31 @@ namespace Tamirhane.Web.Tests;
 public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private PostgreSqlContainer? _container;
+    private string? _connectionString;
+    private string _schema = "";
 
     public async Task InitializeAsync()
     {
-        // Docker yoksa testler [DockerFact] ile atlanır; xUnit fixture'ı yine de kurar, burada hiçbir şey yapılmaz.
         if (!DockerEngine.IsAvailable)
             return;
 
-        _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
-        await _container.StartAsync();
+        if (DockerEngine.UseExternalDatabase)
+        {
+            _schema = "test_" + Guid.NewGuid().ToString("N");
+            _connectionString = DockerEngine.WithSchema(_schema);
+        }
+        else
+        {
+            _container = new PostgreSqlBuilder("postgres:17-alpine").Build();
+            await _container.StartAsync();
+            _connectionString = _container.GetConnectionString();
+        }
 
         using var scope = Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<TamirhaneDbContext>().Database.MigrateAsync();
+        var db = scope.ServiceProvider.GetRequiredService<TamirhaneDbContext>();
+        if (!string.IsNullOrEmpty(_schema))
+            await db.Database.ExecuteSqlRawAsync($"CREATE SCHEMA IF NOT EXISTS \"{_schema}\"");
+        await db.Database.MigrateAsync();
         var queue = Services.GetRequiredService<BackgroundJobQueue>();
         Emails.BeforeRead = () => queue.WhenIdleAsync(TimeSpan.FromSeconds(10));
     }
@@ -56,7 +69,7 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // Program.cs bağlantıyı önce DATABASE_URL'den okur; böylece appsettings.Development.json'daki yerel veritabanı kullanılmaz.
-        builder.UseSetting("DATABASE_URL", _container!.GetConnectionString());
+        builder.UseSetting("DATABASE_URL", _connectionString!);
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<IEmailSender>(Emails);
@@ -105,6 +118,16 @@ public sealed class TamirhaneWebFactory : WebApplicationFactory<Program>, IAsync
 
     public new async Task DisposeAsync()
     {
+        if (!string.IsNullOrEmpty(_schema))
+        {
+            try
+            {
+                using var scope = Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TamirhaneDbContext>();
+                await db.Database.ExecuteSqlRawAsync($"DROP SCHEMA IF EXISTS \"{_schema}\" CASCADE");
+            }
+            catch { }
+        }
         await base.DisposeAsync();
         if (_container is not null)
             await _container.DisposeAsync();

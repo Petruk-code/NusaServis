@@ -1,6 +1,7 @@
-@* Alt bilgi: yıl sunucuda yazılır, site.js tarayıcının yılıyla günceller; yanında yasal sayfalar. *@
+@* Footer: year is rendered server-side, site.js updates with browser year. *@
 <footer class="site-foot">
     <p>© <span data-year>@DateTime.UtcNow.Year</span> Miraç Deprem</p>
+    <p class="muted small">Tamirhane - AGPL-3.0 · <a href="https://github.com/your-org/tamirhane-repair-tracker" target="_blank" rel="noopener noreferrer">Source code</a></p>
     <nav aria-label="@T["footer.legal"]">
         <a asp-controller="Home" asp-action="Privacy">@T["legal.privacy.title"]</a>
         <a asp-controller="Home" asp-action="Terms">@T["legal.terms.title"]</a>

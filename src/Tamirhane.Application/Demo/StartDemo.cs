@@ -48,7 +48,7 @@ public sealed class StartDemo(IDemoShops demos, IAccountService accounts, IUnitO
             if (owner.IsFailure || technician.IsFailure)
                 throw new InvalidOperationException($"Demo hesabı açılamadı: {(owner.Error ?? technician.Error)!.Code}");
 
-            demos.Add(DemoData.Build(Shop.Locales.Contains(locale) ? locale : "tr", owner.Value, technician.Value, now));
+            demos.Add(DemoData.Build(Shop.Locales.Contains(locale) ? locale : "id", owner.Value, technician.Value, now));
             await unitOfWork.SaveChangesAsync(ct);
             await transaction.CommitAsync(ct);
             ownerId = owner.Value;

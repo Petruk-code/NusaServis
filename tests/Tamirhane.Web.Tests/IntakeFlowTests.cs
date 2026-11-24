@@ -6,7 +6,7 @@ using static Tamirhane.Web.Tests.ShopFlows;
 
 namespace Tamirhane.Web.Tests;
 
-/// <summary>Cihaz kabulü HTTP üzerinden: telefonla arama, yeni ve kayıtlı müşteri, doğrulama, overposting, kiracı ayrımı.</summary>
+/// <summary>Cihaz kabulÃ¼ HTTP Ã¼zerinden: telefonla arama, yeni ve kayÄ±tlÄ± mÃ¼ÅŸteri, doÄŸrulama, overposting, kiracÄ± ayrÄ±mÄ±.</summary>
 [Collection(WebCollection.Name)]
 public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
 {
@@ -17,40 +17,40 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
     {
         var owner = await _flows.OwnerAsync("kabul-yeni@example.com");
 
-        var search = await BodyAsync(owner, "/work-orders/new?phone=0532 111 22 33");
-        Assert.Contains("kayıtlı müşteri yok", search);
+        var search = await BodyAsync(owner, "/work-orders/new?phone=0812 3456 7890");
+        Assert.Contains("Tidak ada pelanggan terdaftar dengan", search);
 
-        var response = await ReceiveAsync(owner, "0532 111 22 33", NewCustomer());
+        var response = await ReceiveAsync(owner, "0812 3456 7890", NewCustomer());
 
         var page = await BodyAsync(owner, Browser.RedirectOf(response));
-        Assert.Matches(@"İş emri \d{4}-0001 açıldı", page);
+        Assert.Matches(@"Order Servis \d{4}-0001 dibuka\.", page);
         Assert.Contains("Zeynep Arslan", page);
-        Assert.Contains("0532 111 22 33", page);
+        Assert.Contains("0812 3456 7890", page);
         Assert.Contains("490154203237518", page);
-        Assert.Contains("Teslim alındı", page);
-        Assert.Contains("Fişi yazdır", page);
-        Assert.Contains("Cihaz şifresi kayıtlı", page);
-        // Şifre personel için kapalı bir bölümde, tıklayınca açılır (ekranda sürekli durmaz).
-        Assert.Matches(@"<details class=""passcode"">\s*<summary>Cihaz şifresini göster</summary>\s*<p><code>4826</code>", page);
+        Assert.Contains("Diterima", page);
+        Assert.Contains("Cetak tanda terima", page);
+        Assert.Contains("Kode sandi perangkat tersimpan", page);
+        // Åžifre personel iÃ§in kapalÄ± bir bÃ¶lÃ¼mde, tÄ±klayÄ±nca aÃ§Ä±lÄ±r (ekranda sÃ¼rekli durmaz).
+        Assert.Matches(@"<details class=""passcode"">\s*<summary>Tampilkan kode sandi perangkat</summary>\s*<p><code>4826</code>", page);
     }
 
     [DockerFact]
     public async Task Returning_customer_is_found_by_phone_and_the_same_device_is_reused()
     {
         var owner = await _flows.OwnerAsync("kabul-tekrar@example.com");
-        await ReceiveAsync(owner, "0532 222 33 44", NewCustomer());
+        await ReceiveAsync(owner, "0812 3456 7890", NewCustomer());
 
-        var search = await BodyAsync(owner, "/work-orders/new?phone=" + Uri.EscapeDataString("+90 532 222 3344")); // farklı yazım, aynı numara
+        var search = await BodyAsync(owner, "/work-orders/new?phone=" + Uri.EscapeDataString("+62 812 3456 7890")); // farklÄ± yazÄ±m, aynÄ± numara
         Assert.Contains("<strong>Zeynep Arslan</strong>", search);
-        Assert.DoesNotContain("kayıtlı müşteri yok", search);
+        Assert.DoesNotContain("Tidak ada pelanggan terdaftar dengan", search);
         var customerId = Hidden("Input.CustomerId").Match(search).Groups[1].Value;
         var deviceId = DeviceRadio().Match(search).Groups[1].Value;
 
-        var second = await ReceiveAsync(owner, "+90 532 222 3344", new()
+        var second = await ReceiveAsync(owner, "+62 812 3456 7890", new()
         {
             ["Input.CustomerId"] = customerId,
             ["Input.DeviceId"] = deviceId,
-            ["Input.Complaint"] = "Şarj soketi gevşek",
+            ["Input.Complaint"] = "Åžarj soketi gevÅŸek",
         });
 
         if (second.StatusCode != HttpStatusCode.Redirect)
@@ -62,15 +62,15 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
     [DockerFact]
     public async Task New_customer_without_consent_is_not_saved()
     {
-        var owner = await _flows.OwnerAsync("kabul-kvkk@example.com");
+        var owner = await _flows.OwnerAsync("kabul-pdpa@example.com");
         var fields = NewCustomer();
         fields.Remove("Input.KvkkConsent");
 
-        var response = await ReceiveAsync(owner, "0532 333 44 55", fields);
+        var response = await ReceiveAsync(owner, "0812 3456 7890", fields);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("onayı alınmadan yeni müşteri kaydedilemez", await response.Content.ReadAsStringAsync());
-        await AssertShopCountsAsync("kabul-kvkk@example.com", customers: 0, devices: 0, orders: 0);
+        Assert.Contains("Pelanggan baru tidak bisa disimpan sebelum pemberitahuan privasi dibacakan dan pelanggan memberikan persetujuan.", await response.Content.ReadAsStringAsync());
+        await AssertShopCountsAsync("kabul-pdpa@example.com", customers: 0, devices: 0, orders: 0);
     }
 
     [DockerFact]
@@ -80,13 +80,13 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
         var fields = NewCustomer();
         fields["Input.Imei"] = "490154203237519"; // son hane tutmuyor
 
-        var badImei = await (await ReceiveAsync(owner, "0532 444 55 66", fields)).Content.ReadAsStringAsync();
-        Assert.Contains("IMEI 15 rakam olmalı ve son rakamı tutmalı", badImei);
-        Assert.Contains("value=\"Zeynep Arslan\"", badImei); // yazılanlar kaybolmaz
+        var badImei = await (await ReceiveAsync(owner, "0812 3456 7890", fields)).Content.ReadAsStringAsync();
+        Assert.Contains("IMEI harus 15 digit dengan digit cek yang valid. Tekan *#06# di ponsel untuk melihatnya; jika ragu, kosongkan.", badImei);
+        Assert.Contains("value=\"Zeynep Arslan\"", badImei); // yazÄ±lanlar kaybolmaz
 
         fields["Input.Imei"] = "";
         fields["Input.Complaint"] = "";
-        Assert.Contains("Müşterinin şikâyetini yaz.", await (await ReceiveAsync(owner, "0532 444 55 66", fields)).Content.ReadAsStringAsync());
+        Assert.Contains("Masukkan keluhan pelanggan.", await (await ReceiveAsync(owner, "0812 3456 7890", fields)).Content.ReadAsStringAsync());
     }
 
     [DockerFact]
@@ -96,8 +96,8 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
 
         var page = await BodyAsync(owner, "/work-orders/new?phone=12345");
 
-        Assert.Contains("Telefonu 0532 123 45 67 gibi yaz.", page);
-        Assert.Contains("Müşteriyi bul", page);
+        Assert.Contains("Masukkan nomor telepon seperti 0812 3456 7890.", page);
+        Assert.Contains("Cari pelanggan", page);
     }
 
     [DockerFact]
@@ -112,7 +112,7 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
         fields["Input.Status"] = nameof(WorkOrderStatus.Delivered);
         fields["Input.Number"] = "2026-9999";
 
-        var response = await ReceiveAsync(owner, "0532 555 66 77", fields);
+        var response = await ReceiveAsync(owner, "0812 3456 7890", fields);
         var id = Guid.Parse(Browser.RedirectOf(response).Split('/')[^1]);
 
         await app.AsShopAsync(Guid.Empty, async db =>
@@ -130,22 +130,23 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
     public async Task Another_shops_customer_and_work_order_are_out_of_reach()
     {
         var victim = await _flows.OwnerAsync("kabul-kurban@example.com");
-        var victimOrder = Browser.RedirectOf(await ReceiveAsync(victim, "0532 666 77 88", NewCustomer()));
+        var victimOrder = Browser.RedirectOf(await ReceiveAsync(victim, "0812 3456 7890", NewCustomer()));
         var attacker = await _flows.OwnerAsync("kabul-saldirgan@example.com");
 
         Assert.Equal(HttpStatusCode.NotFound, (await attacker.GetAsync(victimOrder)).StatusCode);
 
-        // Kurbanın müşteri kimliğini bilse bile o müşteriye iş emri açamaz.
+        // KurbanÄ±n mÃ¼ÅŸteri kimliÄŸini bilse bile o mÃ¼ÅŸteriye iÅŸ emri aÃ§amaz.
+        var victimOrderId = Guid.Parse(victimOrder.Split('/')[^1]);
         Guid victimCustomer = default;
-        await app.AsShopAsync(Guid.Empty, async db => victimCustomer = await db.Customers.IgnoreQueryFilters()
-            .Where(c => c.Phone == Domain.Customers.PhoneNumber.Parse("0532 666 77 88").Value).Select(c => c.Id).SingleAsync());
-        var response = await ReceiveAsync(attacker, "0532 999 00 11", new()
+        await app.AsShopAsync(Guid.Empty, async db => victimCustomer = await db.WorkOrders.IgnoreQueryFilters()
+            .Where(o => o.Id == victimOrderId).Select(o => o.CustomerId).SingleAsync());
+        var response = await ReceiveAsync(attacker, "0812 3456 7890", new()
         {
             ["Input.CustomerId"] = victimCustomer.ToString(),
             ["Input.DeviceKind"] = "Phone", ["Input.Brand"] = "Apple", ["Input.Model"] = "iPhone 13",
-            ["Input.Complaint"] = "Ekran kırık",
+            ["Input.Complaint"] = "Ekran kÄ±rÄ±k",
         });
-        Assert.Contains("Seçilen müşteri bulunamadı", await response.Content.ReadAsStringAsync());
+        Assert.Contains("Pelanggan yang dipilih tidak ditemukan. Cari lagi berdasarkan telepon.", await response.Content.ReadAsStringAsync());
     }
 
     [DockerFact]
@@ -163,13 +164,13 @@ public sealed partial class IntakeFlowTests(TamirhaneWebFactory app)
         ["Input.Brand"] = "Apple",
         ["Input.Model"] = "iPhone 13",
         ["Input.Imei"] = "490154203237518",
-        ["Input.Complaint"] = "Ekran kırık",
-        ["Input.Condition"] = "Kasada çizik",
-        ["Input.Accessories"] = "Kılıf",
+        ["Input.Complaint"] = "Ekran kÄ±rÄ±k",
+        ["Input.Condition"] = "Kasada Ã§izik",
+        ["Input.Accessories"] = "KÄ±lÄ±f",
         ["Input.Passcode"] = "4826",
     };
 
-    /// <summary>Telefonla arama sayfasını açar (CSRF token'ı oradan) ve kabul formunu gönderir.</summary>
+    /// <summary>Telefonla arama sayfasÄ±nÄ± aÃ§ar (CSRF token'Ä± oradan) ve kabul formunu gÃ¶nderir.</summary>
     private static Task<HttpResponseMessage> ReceiveAsync(Browser browser, string phone, Dictionary<string, string> fields)
     {
         fields["Input.Phone"] = phone;

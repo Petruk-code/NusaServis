@@ -1,17 +1,16 @@
 using System.Collections.Frozen;
 using System.Globalization;
-using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Localization;
 
 namespace Tamirhane.Web.Localization;
 
-/// <summary>Bütün arayüz metinleri için tek kaynak (görünümler, denetleyiciler, doğrulama mesajları).</summary>
+/// <summary>Sumber tunggal untuk semua teks antarmuka (view, controller, pesan validasi).</summary>
 public sealed class SharedResource;
 
 /// <summary>
-/// Resources/tr.json ve en.json: düz { "anahtar": "metin" } sözlükleri, derlemeye gömülü (dosya kopyalamaya bağlı değil).
-/// Uygulama açılırken bir kez okunur.
+/// Resources/id.json, en.json, tr.json: kamus datar { "key": "text" } yang di-embed ke assembly.
+/// Dibaca sekali saat aplikasi mulai.
 /// </summary>
 public sealed class TextCatalog
 {
@@ -19,7 +18,7 @@ public sealed class TextCatalog
 
     private TextCatalog(FrozenDictionary<string, FrozenDictionary<string, string>> languages) => Languages = languages;
 
-    /// <summary>Dil kodu ("tr", "en") → anahtar → metin.</summary>
+    /// <summary>Kode bahasa ("id", "en", "tr") → key → teks.</summary>
     public FrozenDictionary<string, FrozenDictionary<string, string>> Languages { get; }
 
     public string? Find(string language, string key) =>
@@ -34,10 +33,10 @@ public sealed class TextCatalog
     {
         var assembly = typeof(TextCatalog).Assembly;
         var json = new Dictionary<string, string>();
-        foreach (var language in new[] { "tr", "en" })
+        foreach (var language in new[] { "id", "en", "tr" })
         {
             using var stream = assembly.GetManifestResourceStream($"Tamirhane.Web.Resources.{language}.json")
-                ?? throw new InvalidOperationException($"Resources/{language}.json derlemeye gömülü değil.");
+                ?? throw new InvalidOperationException($"Resources/{language}.json tidak ter-embed di assembly.");
             using var reader = new StreamReader(stream);
             json[language] = reader.ReadToEnd();
         }
@@ -46,8 +45,7 @@ public sealed class TextCatalog
 }
 
 /// <summary>
-/// Şu anki arayüz diline göre metin. Anahtar o dilde yoksa Türkçesi, o da yoksa anahtarın kendisi döner
-/// (ResourceNotFound işaretli): geçiş sırasında henüz anahtara çevrilmemiş Türkçe metinler olduğu gibi görünür.
+/// Teks berdasarkan bahasa UI saat ini. Fallback: id -> en -> tr -> key.
 /// </summary>
 public sealed class JsonStringLocalizer(TextCatalog catalog) : IStringLocalizer
 {
@@ -74,19 +72,27 @@ public sealed class JsonStringLocalizer(TextCatalog catalog) : IStringLocalizer
             ? texts.Select(p => new LocalizedString(p.Key, p.Value))
             : [];
 
-    private static string Language => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "tr";
+    private static string Language
+    {
+        get
+        {
+            var code = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
+            return code is "id" or "en" or "tr" ? code : "id";
+        }
+    }
 
     private (string Text, bool Found) Lookup(string name)
     {
-        if (catalog.Find(Language, name) is { } text)
-            return (text, true);
-        if (catalog.Find("tr", name) is { } turkish)
-            return (turkish, true);
+        foreach (var language in new[] { Language, "id", "en", "tr" }.Distinct(StringComparer.Ordinal))
+        {
+            if (catalog.Find(language, name) is { } text)
+                return (text, true);
+        }
         return (name, false);
     }
 }
 
-/// <summary>Her tür ve konum için aynı paylaşılan yerelleştirici (tek kaynak dosyası çifti).</summary>
+/// <summary>Localizer bersama untuk semua tipe/lokasi.</summary>
 public sealed class JsonStringLocalizerFactory(TextCatalog catalog) : IStringLocalizerFactory
 {
     private readonly JsonStringLocalizer _localizer = new(catalog);

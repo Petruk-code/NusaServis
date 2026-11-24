@@ -4,25 +4,22 @@ using Microsoft.AspNetCore.Localization;
 namespace Tamirhane.Web.Localization;
 
 /// <summary>
-/// Dil adreste (SEO, #42): Türkçe sayfalar önsüz (/privacy), İngilizceler /en altında (/en/privacy). Arama motoru iki dili
-/// ayrı adres olarak görür (hreflang), aynı adres kişiye göre değişmez.
-/// "/en" öneki istek başında temel yola (PathBase) alınır: uygulama yolları değişmeden çalışır, ASP.NET'in ürettiği bütün
-/// linkler, yönlendirmeler ve giriş sayfasına dönüş kendiliğinden /en ile başlar.
+/// Bahasa di URL (SEO): Indonesia tanpa prefix (/privacy), Inggris di /en (/en/privacy).
+/// "/en" dipindah ke PathBase agar routing/link/redirect ASP.NET tetap normal.
 /// </summary>
 public static class LanguagePrefix
 {
     public const string English = "/en";
 
-    /// <summary>Bu dilin adres öneki: İngilizce "/en", Türkçe boş.</summary>
+    /// <summary>Prefix URL untuk budaya: Inggris "/en", default kosong.</summary>
     public static string For(CultureInfo culture) => culture.TwoLetterISOLanguageName == "en" ? English : "";
 
     public static bool IsEnglish(HttpContext context) =>
         context.Request.PathBase.Value?.EndsWith(English, StringComparison.OrdinalIgnoreCase) == true;
 
     /// <summary>
-    /// 1) "/en/..." isteğinde öneki temel yola taşır. 2) Önsüz bir sayfayı açan kişi daha önce İngilizceyi seçtiyse (dil
-    /// çerezi) aynı sayfanın /en adresine yönlendirir. Arama motorunun çerezi olmadığı için önsüz adres onun için hep
-    /// Türkçedir; tarayıcı dili (Accept-Language) bu yüzden yönlendirmede kullanılmaz.
+    /// 1) Request "/en/..." memindahkan prefix ke PathBase.
+    /// 2) Request tanpa prefix diarahkan ke /en hanya jika cookie bahasa memilih English.
     /// </summary>
     public static IApplicationBuilder UseLanguagePrefix(this IApplicationBuilder app) =>
         app.Use(async (context, next) =>
@@ -41,11 +38,11 @@ public static class LanguagePrefix
             await next();
         });
 
-    /// <summary>Kültür adresten gelir: /en İngilizce, önsüz Türkçe.</summary>
+    /// <summary>Budaya dari URL: /en English, selain itu Indonesia (default).</summary>
     public sealed class Provider : RequestCultureProvider
     {
         public override Task<ProviderCultureResult?> DetermineProviderCultureResult(HttpContext httpContext) =>
-            Task.FromResult<ProviderCultureResult?>(new((IsEnglish(httpContext) ? AppCultures.English : AppCultures.Turkish).Name));
+            Task.FromResult<ProviderCultureResult?>(new((IsEnglish(httpContext) ? AppCultures.English : AppCultures.Indonesian).Name));
     }
 
     private static bool PrefersEnglish(HttpContext context) =>
@@ -53,8 +50,6 @@ public static class LanguagePrefix
         && CookieRequestCultureProvider.ParseCookieValue(cookie)?.UICultures.FirstOrDefault() is { } chosen
         && AppCultures.From(chosen.Value)?.TwoLetterISOLanguageName == "en";
 
-    // Yönlendirilen: tarayıcıda açılan sayfalar. Formlar (POST), dosyalar (site.css, qr.svg), sağlık kontrolü, dil seçici
-    // ve müşterinin takip sayfası (dili atölyenin müşteri dilinden ya da ?lang'den gelir) olduğu gibi kalır.
     private static bool IsPage(HttpRequest request)
     {
         if (!HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method))

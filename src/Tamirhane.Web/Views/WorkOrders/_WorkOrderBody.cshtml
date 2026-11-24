@@ -8,7 +8,7 @@
     var created = ViewData["Created"] is true;
     var error = ViewData["Error"] as string;
     var success = ViewData["Success"] as string;
-    var turkey = TimeSpan.FromHours(3);
+    var wib = TimeSpan.FromHours(7);
     var next = Model.NextAction;
     var others = Model.Actions.Where(a => a != next && a != WorkOrderAction.Cancel).ToList();
     var stamps = Model.History.Select(h => h.Status).ToList();
@@ -147,7 +147,7 @@
                     <p>@T["workorder.delivered"]
                         @if (Model.WarrantyUntil is { } until)
                         {
-                            @T["workorder.warranty_until", until.ToOffset(turkey).ToString("d MMMM yyyy")]
+                            @T["workorder.warranty_until", until.ToOffset(wib).ToString("d MMMM yyyy")]
                         }
                     </p>
                     @foreach (var back in Model.WarrantyReturns)
@@ -165,7 +165,7 @@
             @if (Model.CanPromise)
             {
                 // Takip sayfasında "tahmini teslim" olarak görünür; parça gecikince buradan değiştirilir.
-                var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(turkey).DateTime);
+                var today = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(wib).DateTime);
                 <section class="panel" aria-labelledby="promise-heading">
                     <div class="panel-head"><h2 id="promise-heading">@T["workorder.promised"]</h2></div>
                     <form method="post" asp-action="Promise" asp-route-id="@Model.Id" hx-post="@Hx("promise")" hx-target="#work-order" hx-swap="outerHTML" class="panel-body inline-form">
@@ -235,7 +235,7 @@
                 {
                     <li>
                         <strong>@T.Of(h.Status)</strong>
-                        <span class="muted">@h.At.ToOffset(turkey).ToString("d MMMM HH:mm"), @(h.By ?? T["workorder.by_customer"])</span>
+                        <span class="muted">@h.At.ToOffset(wib).ToString("d MMMM HH:mm"), @(h.By ?? T["workorder.by_customer"])</span>
                         @if (h.Note is not null)
                         {
                             <span>@h.Note</span>
@@ -260,7 +260,7 @@
                 <ul class="note-list">
                     @foreach (var n in workshopNotes)
                     {
-                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(turkey).ToString("d MMMM HH:mm")</span></li>
+                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(wib).ToString("d MMMM HH:mm")</span></li>
                     }
                 </ul>
 
@@ -276,7 +276,7 @@
                 <ul class="note-list is-customer">
                     @foreach (var n in customerNotes)
                     {
-                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(turkey).ToString("d MMMM HH:mm")</span></li>
+                        <li>@n.Text <span class="muted">@n.By, @n.At.ToOffset(wib).ToString("d MMMM HH:mm")</span></li>
                     }
                 </ul>
             </div>
