@@ -1,6 +1,6 @@
 [English](README.md) | [Bahasa Indonesia](README.id.md) | Türkçe
 
-# Tamirhane
+# NusaServis
 
 Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik servis ve tamir takip programı: yazdırılabilir fişle cihaz kabulü, iş emri, müşterinin takip linkinden onayladığı teklif, parça stoku, tahsilat ve garanti. Müşteri cihazının durumunu hesap açmadan telefonundan takip eder. ASP.NET Core MVC ve Clean Architecture ile yazıldı.
 
@@ -57,19 +57,19 @@ Telefon, bilgisayar ve ev aleti tamir eden atölyeler için ücretsiz teknik ser
 Clean Architecture: bağımlılıklar sadece içe doğru.
 
 ```
-Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
+NusaServis.Web  ──►  NusaServis.Application  ──►  NusaServis.Domain
       │                      ▲
-      └──► Tamirhane.Infrastructure (sadece Program.cs'te servis kaydı için)
+      └──► NusaServis.Infrastructure (sadece Program.cs'te servis kaydı için)
 ```
 
 | Proje | Görevi |
 |---|---|
-| `Tamirhane.Domain` | Varlıklar ve iş kuralları: iş emri durum akışı, teklif toplamları, stok, garanti, IMEI kontrolü. Hiçbir çatıya bağlı değil. |
-| `Tamirhane.Application` | Kullanım senaryoları (her biri tek sınıf); depolama, e-posta, bildirim, saat ve şifre şifreleme arayüzleri. |
-| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
-| `Tamirhane.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
+| `NusaServis.Domain` | Varlıklar ve iş kuralları: iş emri durum akışı, teklif toplamları, stok, garanti, IMEI kontrolü. Hiçbir çatıya bağlı değil. |
+| `NusaServis.Application` | Kullanım senaryoları (her biri tek sınıf); depolama, e-posta, bildirim, saat ve şifre şifreleme arayüzleri. |
+| `NusaServis.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend e-posta, Web Push, QR kod, Data Protection. |
+| `NusaServis.Web` | MVC controller ve görünümler, dil desteği, güvenlik başlıkları, istek sınırları. MCP sunucusu ve OAuth uçları da burada, aynı kullanım senaryolarını çağıran ikinci bir sunum katmanı olarak durur. |
 
-Bağımlılık kuralını `Tamirhane.Architecture.Tests` denetler. 748 test gerçek bir PostgreSQL'e karşı çalışır (Testcontainers/Docker veya `TEST_DATABASE_URL`).
+Bağımlılık kuralını `NusaServis.Architecture.Tests` denetler. 748 test gerçek bir PostgreSQL'e karşı çalışır (Testcontainers/Docker veya `TEST_DATABASE_URL`).
 
 Kısaca güvenlik: Trusted Types'lı sıkı CSP, her POST'ta CSRF token'ı (bir test bütün POST uçlarını gezer), IP başına istek sınırı, `__Host-` çerezler, her sorguda kiracı filtresi, Identity ile hash'lenmiş şifreler, sunucu diskinde Data Protection anahtarları, şifreli cihaz şifreleri, sertifikası doğrulanan veritabanı bağlantısı.
 
@@ -88,13 +88,13 @@ Kısaca güvenlik: Trusted Types'lı sıkı CSP, her POST'ta CSRF token'ı (bir 
 Gerekenler: güncel .NET SDK ve Docker (yerel veritabanı ve entegrasyon testleri için).
 
 ```sh
-git clone https://github.com/MrcDprm/tamirhane-repair-tracker.git
-cd tamirhane-repair-tracker
-docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
+git clone https://github.com/MrcDprm/NusaServis-repair-tracker.git
+cd NusaServis-repair-tracker
+docker run -d --name NusaServis-db -e POSTGRES_USER=NusaServis -e POSTGRES_PASSWORD=NusaServis -e POSTGRES_DB=NusaServis -p 5433:5432 postgres:17-alpine
 cp .env.example .env          # değerler dosyada açıklanıyor; RESEND_API_KEY boşsa e-postalar konsola yazılır
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
-dotnet run --project src/Tamirhane.Web --launch-profile https
+dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
+dotnet run --project src/NusaServis.Web --launch-profile https
 ```
 
 https://localhost:7071 adresini açıp "Demoyu dene"ye bas ya da bir atölye kaydet (doğrulama linki konsolda görünür).
@@ -107,7 +107,7 @@ Caddy arkasında bir Linux sunucuya yayın: [deploy/README.md](deploy/README.md)
 
 1. Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle'yi aç.
 2. Sunucu adresi: `https://tamirhane.miracdeprem.com/mcp` (yerelde: `https://localhost:7071/mcp`).
-3. Açılan Tamirhane sayfasında giriş yap ve İzin ver'e bas. Bağlı uygulamalar menüdeki **Yapay zekâ** sayfasında listelenir.
+3. Açılan NusaServis sayfasında giriş yap ve İzin ver'e bas. Bağlı uygulamalar menüdeki **Yapay zekâ** sayfasında listelenir.
 
 Araçlar: `find_work_order`, `list_work_orders`, `low_stock`, `change_status`. Durum değiştirmeden önce istemci senden onay ister.
 

@@ -8,11 +8,11 @@ self.addEventListener("push", function (event) {
   } catch (e) {
     data = {};
   }
-  event.waitUntil(self.registration.showNotification(data.title || "Tamirhane", {
+  event.waitUntil(self.registration.showNotification(data.title || "NusaServis", {
     body: data.body || "",
     icon: "/img/notification-192.png",
     // Aynı iş emrinin yeni bildirimi eskisinin yerine geçer; bildirim merkezinde üst üste birikmez.
-    tag: data.url || "tamirhane",
+    tag: data.url || "NusaServis",
     renotify: true,
     data: { url: data.url },
   }));

@@ -85,7 +85,7 @@ public sealed class AccountServiceTests(PostgresFixture db)
         var mail = Assert.Single(db.Emails.SentTo("dort@example.com"));
         Assert.Contains("https://tamirhane.test/en/account/login", mail.Text); // İngilizce atölye: İngilizce sayfa
         Assert.Contains("https://tamirhane.test/en/account/forgot-password", mail.Text);
-        Assert.Equal("You already have a Tamirhane account", mail.Subject);
+        Assert.Equal("You already have a NusaServis account", mail.Subject);
     }
 
     [DockerFact]
@@ -113,7 +113,7 @@ public sealed class AccountServiceTests(PostgresFixture db)
         await scope.Accounts.ResendEmailConfirmationAsync("kayitsiz@example.com", default);
 
         var mail = Assert.Single(db.Emails.SentTo("sekiz@example.com"));
-        Assert.Equal("Confirm your Tamirhane account", mail.Subject);
+        Assert.Equal("Confirm your NusaServis account", mail.Subject);
         Assert.Empty(db.Emails.SentTo("kayitsiz@example.com"));
 
         Assert.True(await scope.Accounts.ConfirmEmailAsync(userId, QueryHelpers.ParseQuery(LinkIn(mail).Query)["token"]!, default));
@@ -190,7 +190,7 @@ public sealed class AccountServiceTests(PostgresFixture db)
         await scope.Accounts.SendPasswordResetAsync("onbir@example.com", default);
         await scope.Accounts.SendPasswordResetAsync("kimse@example.com", default);
 
-        Assert.Equal("Reset your Tamirhane password", Assert.Single(db.Emails.SentTo("onbir@example.com")).Subject);
+        Assert.Equal("Reset your NusaServis password", Assert.Single(db.Emails.SentTo("onbir@example.com")).Subject);
         Assert.Empty(db.Emails.SentTo("kimse@example.com"));
     }
 

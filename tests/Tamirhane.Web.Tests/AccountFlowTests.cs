@@ -54,7 +54,7 @@ public sealed partial class AccountFlowTests(TamirhaneWebFactory app)
         Assert.Equal("/account/check-email", Browser.RedirectOf(again));
         var mails = app.Emails.SentTo("kayitli@example.com");
         Assert.Equal(2, mails.Count);
-        Assert.Contains(mails, m => m.Subject.Contains("sudah terdaftar di Tamirhane"));
+        Assert.Contains(mails, m => m.Subject.Contains("sudah terdaftar di NusaServis"));
     }
 
     [DockerFact]

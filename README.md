@@ -1,6 +1,6 @@
 [Bahasa Indonesia](README.id.md) | English | [Türkçe](README.tr.md)
 
-# Tamirhane
+# NusaServis
 
 Free repair shop software for phone, computer and appliance repair shops: device check-in with a printable receipt, work orders, quotes the customer approves from a tracking link, parts stock, payments and warranty. Customers follow their repair on their phone without an account. Built with ASP.NET Core MVC on Clean Architecture.
 
@@ -57,19 +57,19 @@ Free repair shop software for phone, computer and appliance repair shops: device
 Clean Architecture: dependencies only point inward.
 
 ```
-Tamirhane.Web  ──►  Tamirhane.Application  ──►  Tamirhane.Domain
+NusaServis.Web  ──►  NusaServis.Application  ──►  NusaServis.Domain
       │                      ▲
-      └──► Tamirhane.Infrastructure (only to register services in Program.cs)
+      └──► NusaServis.Infrastructure (only to register services in Program.cs)
 ```
 
 | Project | Responsibility |
 |---|---|
-| `Tamirhane.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
-| `Tamirhane.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
-| `Tamirhane.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
-| `Tamirhane.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
+| `NusaServis.Domain` | Entities and business rules: work order status flow, quote totals, stock, warranty, IMEI check. No framework references. |
+| `NusaServis.Application` | Use cases (one class each) and interfaces for storage, email, push, the clock and passcode encryption. |
+| `NusaServis.Infrastructure` | EF Core + PostgreSQL, ASP.NET Core Identity, Resend email, Web Push, QR codes, Data Protection. |
+| `NusaServis.Web` | MVC controllers and views, localisation, security headers, rate limits. The MCP server and OAuth endpoints are a second presentation layer here that calls the same use cases. |
 
-The dependency rule is checked by `Tamirhane.Architecture.Tests`. 748 tests run against a real PostgreSQL (Testcontainers/Docker or `TEST_DATABASE_URL`).
+The dependency rule is checked by `NusaServis.Architecture.Tests`. 748 tests run against a real PostgreSQL (Testcontainers/Docker or `TEST_DATABASE_URL`).
 
 Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a test walks all POST endpoints), per-IP rate limits, `__Host-` cookies, tenant filter on every query, passwords hashed by Identity, Data Protection keys on the server's disk, encrypted device passcodes, TLS-verified database connection.
 
@@ -88,19 +88,19 @@ Security in short: strict CSP with Trusted Types, CSRF tokens on every POST (a t
 Requirements: current .NET SDK and PostgreSQL. Docker is optional (for Testcontainers integration tests / Docker-based local DB).
 
 ```sh
-git clone https://github.com/MrcDprm/tamirhane-repair-tracker.git
-cd tamirhane-repair-tracker
+git clone https://github.com/MrcDprm/NusaServis-repair-tracker.git
+cd NusaServis-repair-tracker
 cp .env.example .env
 ```
 
-`.env` is loaded in Development with the lowest priority. Keep `DATABASE_URL` commented for local PostgreSQL; if set, it overrides `ConnectionStrings:Tamirhane`.
+`.env` is loaded in Development with the lowest priority. Keep `DATABASE_URL` commented for local PostgreSQL; if set, it overrides `ConnectionStrings:NusaServis`.
 
 ### Option A: Local PostgreSQL (recommended for dev)
 
-Use `src/Tamirhane.Web/appsettings.Development.json` default:
+Use `src/NusaServis.Web/appsettings.Development.json` default:
 
 ```json
-"ConnectionStrings": { "Tamirhane": "Host=localhost;Port=5432;Database=tamirhane;Username=tamirhane;Password=tamirhane" }
+"ConnectionStrings": { "NusaServis": "Host=localhost;Port=5432;Database=NusaServis;Username=NusaServis;Password=NusaServis" }
 ```
 
 Windows/Scoop helper:
@@ -119,17 +119,17 @@ Manual commands:
 
 ```sh
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
-dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
+dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
+dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
 ```
 
 ### Option B: Docker PostgreSQL
 
 ```sh
-docker run -d --name tamirhane-db -e POSTGRES_USER=tamirhane -e POSTGRES_PASSWORD=tamirhane -e POSTGRES_DB=tamirhane -p 5433:5432 postgres:17-alpine
+docker run -d --name NusaServis-db -e POSTGRES_USER=NusaServis -e POSTGRES_PASSWORD=NusaServis -e POSTGRES_DB=NusaServis -p 5433:5432 postgres:17-alpine
 ```
 
-Set `DATABASE_URL=postgresql://tamirhane:tamirhane@localhost:5433/tamirhane` in `.env` (or use the matching connection string), then run migrations and app.
+Set `DATABASE_URL=postgresql://NusaServis:NusaServis@localhost:5433/NusaServis` in `.env` (or use the matching connection string), then run migrations and app.
 
 ### Option C: Neon PostgreSQL
 
@@ -139,8 +139,8 @@ Keep Neon credentials in the ignored `.env.neon` (or in real environment variabl
 # .env.neon
 # DATABASE_URL=postgresql://<user>:<password>@<host>/<db>?sslmode=require
 $env:DOTENV_FILE="neon"
-dotnet ef database update --project src/Tamirhane.Infrastructure --startup-project src/Tamirhane.Infrastructure
-dotnet run --project src/Tamirhane.Web/Tamirhane.Web.csproj
+dotnet ef database update --project src/NusaServis.Infrastructure --startup-project src/NusaServis.Infrastructure
+dotnet run --project src/NusaServis.Web/NusaServis.Web.csproj
 ```
 
 Without `DOTENV_FILE`, Development keeps reading `.env`. Real environment variables still win over either file.
@@ -155,7 +155,7 @@ Deployment to a Linux server behind Caddy: [deploy/README.md](deploy/README.md).
 
 1. In Claude, open Settings → Connectors → Add custom connector.
 2. Server URL: `https://tamirhane.miracdeprem.com/mcp` (for a local run: `https://localhost:7071/mcp`).
-3. Sign in on the Tamirhane page that opens and press Allow. Connected apps are listed under **AI assistant** in the menu.
+3. Sign in on the NusaServis page that opens and press Allow. Connected apps are listed under **AI assistant** in the menu.
 
 Tools: `find_work_order`, `list_work_orders`, `low_stock`, `change_status`. Before a status change the client asks you to confirm.
 

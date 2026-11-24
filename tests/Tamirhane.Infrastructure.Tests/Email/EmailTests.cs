@@ -11,7 +11,7 @@ namespace Tamirhane.Infrastructure.Tests.Email;
 public sealed class EmailTests
 {
     private static readonly Uri Link = new("https://tamirhane.test/invitation?token=abc&x=1");
-    private static readonly EmailFrom From = EmailFrom.Parse("Tamirhane <tamirhane@miracdeprem.com>");
+    private static readonly EmailFrom From = EmailFrom.Parse("NusaServis <tamirhane@miracdeprem.com>");
 
     [Theory]
     [InlineData("demo-1a2b@demo.tamirhane.invalid", true)]
@@ -57,8 +57,8 @@ public sealed class EmailTests
     }
 
     [Theory]
-    [InlineData("id", "Bengkel Jaya mengundang Anda ke Tamirhane", "26 Oktober 2026 16:00")]
-    [InlineData("en", "Bengkel Jaya invited you to Tamirhane", "26 October 2026 16:00")]
+    [InlineData("id", "Bengkel Jaya mengundang Anda ke NusaServis", "26 Oktober 2026 16:00")]
+    [InlineData("en", "Bengkel Jaya invited you to NusaServis", "26 October 2026 16:00")]
     public void Invitation_shows_the_expiry_in_local_time_and_language(string locale, string subject, string expires)
     {
         // DB stores UTC: 09:00 UTC = 16:00 WIB.
@@ -74,17 +74,17 @@ public sealed class EmailTests
     [Fact]
     public void Email_from_setting_is_parsed_and_bad_setting_stops_the_app()
     {
-        Assert.Equal(new EmailFrom("Tamirhane", "tamirhane@miracdeprem.com"), From);
+        Assert.Equal(new EmailFrom("NusaServis", "tamirhane@miracdeprem.com"), From);
         Assert.Throws<InvalidOperationException>(() => EmailFrom.Parse("tamirhane@miracdeprem.com")); // ad yok
-        Assert.Throws<InvalidOperationException>(() => EmailFrom.Parse("Tamirhane <adres-yok>"));
+        Assert.Throws<InvalidOperationException>(() => EmailFrom.Parse("NusaServis <adres-yok>"));
     }
 
     [Theory]
-    [InlineData(null, "\"Tamirhane\" <tamirhane@miracdeprem.com>")]
+    [InlineData(null, "\"NusaServis\" <tamirhane@miracdeprem.com>")]
     [InlineData("Çağlar Teknik Servis", "\"Çağlar Teknik Servis\" <tamirhane@miracdeprem.com>")]
     [InlineData("Kaya\r\nBcc: kurban@example.com", "\"Kaya Bcc: kurban@example.com\" <tamirhane@miracdeprem.com>")]
     [InlineData("\"Kaya\" <sahte@kotu.site>", "\"Kaya sahte@kotu.site\" <tamirhane@miracdeprem.com>")]
-    [InlineData("   ", "\"Tamirhane\" <tamirhane@miracdeprem.com>")]
+    [InlineData("   ", "\"NusaServis\" <tamirhane@miracdeprem.com>")]
     public void Sender_name_cannot_add_headers_or_change_the_address(string? name, string expected)
     {
         Assert.Equal(expected, From.Format(name));

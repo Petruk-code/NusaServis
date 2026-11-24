@@ -1,6 +1,6 @@
-# Tamirhane: rencana v1
+# NusaServis: rencana v1
 
-Sistem pelacakan pesanan kerja untuk bengkel servis dan perbaikan. ASP.NET Core MVC, Clean Architecture, PostgreSQL. Lisensi AGPL-3.0. Tidak ada rencana masa depan: semua hal di bawah selesai sebelum v1.0.0. Fitur yang memerlukan biaya atau perusahaan (SMS, faktur e-Arsip, pembayaran online) tidak termasuk cakupan. Di fork/cabang ini produk bernama OpenRespairPos / Tamirhane (cabang `feat/OpenRespairPos`).
+Sistem pelacakan pesanan kerja untuk bengkel servis dan perbaikan. ASP.NET Core MVC, Clean Architecture, PostgreSQL. Lisensi AGPL-3.0. Tidak ada rencana masa depan: semua hal di bawah selesai sebelum v1.0.0. Fitur yang memerlukan biaya atau perusahaan (SMS, faktur e-Arsip, pembayaran online) tidak termasuk cakupan. Di fork/cabang ini produk bernama NusaServis / NusaServis (cabang `feat/NusaServis`).
 
 ## Siapa, di mana, untuk apa
 
@@ -47,22 +47,22 @@ Sistem pelacakan pesanan kerja untuk bengkel servis dan perbaikan. ASP.NET Core 
 
 ```
 src/
-  Tamirhane.Domain          entitas, objek nilai, aturan bisnis, kesalahan domain
-  Tamirhane.Application     kasus penggunaan, antarmuka (repositori, jam, email, push, pengguna/bengkel saat ini)
-  Tamirhane.Infrastructure  EF Core + Npgsql, Identity, Resend, Web Push, pembuatan QR
-  Tamirhane.Web             controller MVC, view, autentikasi, lokalisasi, header keamanan
+  NusaServis.Domain          entitas, objek nilai, aturan bisnis, kesalahan domain
+  NusaServis.Application     kasus penggunaan, antarmuka (repositori, jam, email, push, pengguna/bengkel saat ini)
+  NusaServis.Infrastructure  EF Core + Npgsql, Identity, Resend, Web Push, pembuatan QR
+  NusaServis.Web             controller MVC, view, autentikasi, lokalisasi, header keamanan
 tests/
-  Tamirhane.Domain.Tests        aturan (mesin status, total penawaran, stok, garansi)
-  Tamirhane.Application.Tests   kasus penggunaan dengan repositori palsu
-  Tamirhane.Architecture.Tests  aturan ketergantungan (NetArchTest) + integrasi (WebApplicationFactory + Testcontainers PostgreSQL)
+  NusaServis.Domain.Tests        aturan (mesin status, total penawaran, stok, garansi)
+  NusaServis.Application.Tests   kasus penggunaan dengan repositori palsu
+  NusaServis.Architecture.Tests  aturan ketergantungan (NetArchTest) + integrasi (WebApplicationFactory + Testcontainers PostgreSQL)
 ```
 
 Saat ini ada 748 test.
 
 **Aturan ketergantungan:** Domain tidak bergantung pada proyek mana pun dan paket NuGet mana pun. Application hanya bergantung pada Domain; tidak mengenal EF Core, ASP.NET, atau Identity. Infrastructure mengimplementasikan antarmuka di Application. Web mereferensikan Infrastructure hanya di `Program.cs` untuk pendaftaran layanan (composition root). Tes arsitektur menangkap pelanggaran aturan ini bukan saat kompilasi, melainkan saat pengujian:
-- Domain → tidak boleh ada proyek `Tamirhane.*` maupun `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore`.
+- Domain → tidak boleh ada proyek `NusaServis.*` maupun `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore`.
 - Application → tidak boleh ada `Infrastructure`, `Web`, `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore`.
-- Controller tidak menggunakan tipe `Tamirhane.Infrastructure`.
+- Controller tidak menggunakan tipe `NusaServis.Infrastructure`.
 
 **Keputusan:**
 - **Tanpa MediatR:** pada 2025 paket ini beralih ke lisensi komersial. Setiap kasus penggunaan adalah satu kelas (seperti `ReceiveDeviceHandler`), disuntikkan langsung di Web. Validasi ada di dalam kasus penggunaan; tanpa pustaka eksternal.
@@ -185,7 +185,7 @@ Tidak mengulang proyek sebelumnya: Atkinson Hyperlegible (Nabız), Bricolage Gro
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│ Tamirhane   [ Cari nama, telepon, IMEI atau no pesanan kerja........ ]  [Terima perangkat] │
+│ NusaServis   [ Cari nama, telepon, IMEI atau no pesanan kerja........ ]  [Terima perangkat] │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │ Hari ini                                                                            │
 │  Menunggu persetujuan 3   Siap diambil 5   Sedang diperbaiki 8   Lebih dari 30 hari 1 │  ← kalau diklik, daftar difilter
@@ -223,11 +223,11 @@ Halaman pesanan kerja: di kiri label (permukaan karton, lubang, nomor, perangkat
 
 ## v1.1.0: Akses dari asisten kecerdasan buatan (MCP)
 
-Pemilik bengkel atau teknisi dapat berkata kepada Claude miliknya (web, seluler, desktop): "bagaimana status 2026-0042", "suku cadang dengan stok kritis", "yang siap diambil hari ini", "tulis pesan untuk Bapak Budi bahwa perangkatnya sudah siap". Model bahasa dijalankan oleh klien pengguna sendiri; Tamirhane tidak menanggung biaya API maupun kunci API.
+Pemilik bengkel atau teknisi dapat berkata kepada Claude miliknya (web, seluler, desktop): "bagaimana status 2026-0042", "suku cadang dengan stok kritis", "yang siap diambil hari ini", "tulis pesan untuk Bapak Budi bahwa perangkatnya sudah siap". Model bahasa dijalankan oleh klien pengguna sendiri; NusaServis tidak menanggung biaya API maupun kunci API.
 
 **Arsitektur**
 - MCP adalah lapisan presentasi kedua di samping MVC: dengan SDK C# resmi (`ModelContextProtocol.AspNetCore`) di aplikasi yang sama pada `/mcp` (Streamable HTTP). Alat memanggil kasus penggunaan Application yang sudah ada; filter tenant, peran, dan mesin status tetap berlaku. Tidak ada server terpisah, tetap VM Oracle dan Caddy yang sama.
-- **OAuth 2.1:** Tamirhane menjadi server otorisasinya sendiri (OpenIddict, Apache-2.0, di atas ASP.NET Identity). Authorization code + PKCE (S256), access token berumur pendek, refresh token yang berputar. Login memakai halaman masuk yang ada; setelah itu layar izin ("Claude dapat membaca pesanan kerja bengkel ini dan mengubah statusnya"). Token terikat pada satu bengkel dan peran staf tersebut.
+- **OAuth 2.1:** NusaServis menjadi server otorisasinya sendiri (OpenIddict, Apache-2.0, di atas ASP.NET Identity). Authorization code + PKCE (S256), access token berumur pendek, refresh token yang berputar. Login memakai halaman masuk yang ada; setelah itu layar izin ("Claude dapat membaca pesanan kerja bengkel ini dan mengubah statusnya"). Token terikat pada satu bengkel dan peran staf tersebut.
 - **Penemuan (discovery):** `/.well-known/oauth-protected-resource` (RFC 9728) dan `/.well-known/oauth-authorization-server` (RFC 8414); respons 401 menyertakan alamat metadata dalam `WWW-Authenticate`. Nilai `aud` token adalah alamat MCP (RFC 8707).
 - **Pendaftaran klien:** Pendaftaran dinamis (RFC 7591), jalur yang dipakai claude.ai, Claude Desktop/Code, VS Code, dan Cursor. Alamat redirect dibatasi daftar izin (https claude.ai/claude.com, `localhost`/`127.0.0.1` untuk klien lokal); rate limit terpisah untuk pendaftaran; pendaftaran lama yang tidak pernah mendapat token dihapus berkala.
 

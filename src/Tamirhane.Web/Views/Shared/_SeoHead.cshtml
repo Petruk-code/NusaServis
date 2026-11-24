@@ -9,7 +9,7 @@
     var lang = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
     var isEnglish = lang == "en";
     var canonical = isEnglish ? englishPath : defaultPath;
-    var title = ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · Tamirhane";
+    var title = ViewData["SeoTitle"] as string ?? $"{ViewData["Title"]} · NusaServis";
     var description = ViewData["Description"] as string ?? T["seo.home.description"];
     var ogLocale = lang switch { "en" => "en_GB", "tr" => "tr_TR", _ => "id_ID" };
     var ogLocaleAlt = isEnglish ? "id_ID" : "en_GB";
@@ -22,7 +22,7 @@
 <link rel="alternate" hreflang="en" href="@englishPath" />
 <link rel="alternate" hreflang="x-default" href="@defaultPath" />
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="Tamirhane" />
+<meta property="og:site_name" content="NusaServis" />
 <meta property="og:title" content="@title" />
 <meta property="og:description" content="@description" />
 <meta property="og:url" content="@canonical" />

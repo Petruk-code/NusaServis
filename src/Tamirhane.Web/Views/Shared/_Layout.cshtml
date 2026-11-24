@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · Tamirhane</title>
+    <title>@ViewData["Title"] · NusaServis</title>
     @* Uygulama ve hesap sayfaları arama sonuçlarına girmez; aranan sayfa tanıtım (#42). *@
     <meta name="robots" content="noindex" />
     <link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
@@ -36,7 +36,7 @@
         <div class="shell">
             <aside class="side pegboard" aria-label="@T["layout.side"]">
                 <div class="side-head">
-                    <a class="brand" asp-controller="Panel" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+                    <a class="brand" asp-controller="Panel" asp-action="Index"><partial name="_BrandMark" />NusaServis</a>
                     <button type="button" class="side-btn side-toggle" aria-expanded="false" aria-controls="side-nav">
                         <svg class="icon"><use href="/img/icons.svg#i-menu" /></svg>@T["layout.menu"]
                     </button>
@@ -109,7 +109,7 @@
     else
     {
         <header class="plain-top">
-            <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />Tamirhane</a>
+            <a class="brand" asp-controller="Home" asp-action="Index"><partial name="_BrandMark" />NusaServis</a>
             <partial name="_LanguageSwitch" model="@("btn")" />
             <nav class="account-links" aria-label="@T["layout.account"]">
                 <a class="btn" asp-controller="Account" asp-action="Login">@T["account.login.title"]</a>

@@ -129,7 +129,7 @@ public sealed partial class StaffFlowTests(TamirhaneWebFactory app)
 
         var response = await _flows.AcceptAsync(app.NewBrowser(), "iki-usta@example.com");
 
-        Assert.Contains("sudah memiliki akun Tamirhane", await response.Content.ReadAsStringAsync());
+        Assert.Contains("sudah memiliki akun NusaServis", await response.Content.ReadAsStringAsync());
     }
 
     private static string StaffIdOf(string staffPage) => RemovePattern().Match(staffPage).Groups[1].Value;

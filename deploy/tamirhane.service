@@ -1,27 +1,27 @@
-# Tamirhane web uygulaması (Oracle Cloud Always Free, Ubuntu). Caddy önde; uygulama sadece 127.0.0.1:8090'da dinler.
-# Kurulum: /etc/systemd/system/tamirhane.service, ayrıntılar deploy/README.md.
+# NusaServis web uygulaması (Oracle Cloud Always Free, Ubuntu). Caddy önde; uygulama sadece 127.0.0.1:8090'da dinler.
+# Kurulum: /etc/systemd/system/NusaServis.service, ayrıntılar deploy/README.md.
 [Unit]
-Description=Tamirhane web uygulaması
+Description=NusaServis web uygulaması
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/tamirhane
-ExecStart=/opt/tamirhane/Tamirhane.Web
+WorkingDirectory=/opt/NusaServis
+ExecStart=/opt/NusaServis/NusaServis.Web
 Restart=always
 RestartSec=5
 
 # Gizli değerler (DATABASE_URL, RESEND_API_KEY, VAPID...) sadece root'un okuyabildiği dosyada; repoda yok.
-EnvironmentFile=/etc/tamirhane/tamirhane.env
+EnvironmentFile=/etc/NusaServis/NusaServis.env
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://127.0.0.1:8090
 Environment=DOTNET_gcServer=0
 Environment=DOTNET_NOLOGO=1
 
-# Data Protection anahtarları (oturum çerezi, cihaz şifresi): /var/lib/tamirhane, sadece servisin kullanıcısı okur.
+# Data Protection anahtarları (oturum çerezi, cihaz şifresi): /var/lib/NusaServis, sadece servisin kullanıcısı okur.
 # systemd klasörü kendisi açar ve yolunu STATE_DIRECTORY ortam değişkeniyle verir; yeniden başlatmada silinmez.
-StateDirectory=tamirhane
+StateDirectory=NusaServis
 StateDirectoryMode=0700
 
 # Sıkılaştırma: her açılışta geçici bir kullanıcı; dosya sistemi salt okunur (anahtar klasörü hariç), ev klasörleri ve

@@ -28,8 +28,8 @@ public static class EmailLayout
     {
         var lang = locale == "en" ? "en" : "id";
         var sentBy = lang == "en"
-            ? "Sent by Tamirhane, repair shop management."
-            : "Email ini dikirim oleh sistem pelacakan servis Tamirhane.";
+            ? "Sent by NusaServis, repair shop management."
+            : "Email ini dikirim oleh sistem pelacakan servis NusaServis.";
         var buttonHelp = lang == "en"
             ? "If the button does not work, copy this link into your browser:"
             : "Jika tombol tidak berfungsi, salin tautan ini ke browser Anda:";
@@ -72,7 +72,7 @@ public static class EmailLayout
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 12px">
             <tr><td align="center">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:8px;font-family:Arial,Helvetica,sans-serif">
-            <tr><td style="padding:20px 28px;border-bottom:3px solid {Accent};font-size:18px;font-weight:700;color:{Accent};>Tamirhane</td></tr>
+            <tr><td style="padding:20px 28px;border-bottom:3px solid {Accent};font-size:18px;font-weight:700;color:{Accent};>NusaServis</td></tr>
             <tr><td style="padding:28px">{body}<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:{Muted}">{E(footer)}</p></td></tr>
             </table>
             <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:{Muted}">{E(sentBy)}</p>

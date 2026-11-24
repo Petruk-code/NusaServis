@@ -12,12 +12,12 @@ public sealed record EmailFrom(string Name, string Address)
 {
     public const int MaxNameLength = 70;
 
-    /// <summary>EMAIL_FROM ayarı ("Tamirhane &lt;tamirhane@alan.adi&gt;"); bozuksa uygulama açılmaz.</summary>
+    /// <summary>EMAIL_FROM ayarı ("NusaServis &lt;noreply@alan.adi&gt;"); bozuksa uygulama açılmaz.</summary>
     public static EmailFrom Parse(string value)
     {
         if (!MailAddress.TryCreate(value, out var parsed) || string.IsNullOrWhiteSpace(parsed.DisplayName))
             throw new InvalidOperationException("EMAIL_FROM geçersiz: \"Ad <adres@alan.adi>\" biçiminde olmalı.");
-        return new EmailFrom(Clean(parsed.DisplayName) ?? "Tamirhane", parsed.Address);
+        return new EmailFrom(Clean(parsed.DisplayName) ?? "NusaServis", parsed.Address);
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -12,8 +12,8 @@ public sealed partial class SeoTests(TamirhaneWebFactory app)
     private const string Origin = "https://localhost";
 
     [DockerTheory]
-    [InlineData("/", "id", "Tamirhane: Software bengkel gratis dan pelacakan servis")]
-    [InlineData("/en/", "en", "Tamirhane: Free repair shop software and repair tracking")]
+    [InlineData("/", "id", "NusaServis: Software bengkel gratis dan pelacakan servis")]
+    [InlineData("/en/", "en", "NusaServis: Free repair shop software and repair tracking")]
     public async Task Landing_page_has_its_title_canonical_language_alternates_and_card(string path, string lang, string title)
     {
         var html = await (await app.NewBrowser().GetAsync(path)).Content.ReadAsStringAsync();

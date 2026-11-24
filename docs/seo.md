@@ -1,6 +1,6 @@
 # SEO (#42)
 
-Tujuan: seseorang yang mencari perangkat lunak pelacakan kerja untuk bengkel perbaikan menemukan OpenRespairPos / Tamirhane. Hanya halaman promosi dan legal yang masuk indeks (`/`, `/privacy`, `/terms` dan padanan `/en/...`); aplikasi, halaman akun, dan tautan pelacakan pelanggan tidak masuk.
+Tujuan: seseorang yang mencari perangkat lunak pelacakan kerja untuk bengkel perbaikan menemukan NusaServis / NusaServis. Hanya halaman promosi dan legal yang masuk indeks (`/`, `/privacy`, `/terms` dan padanan `/en/...`); aplikasi, halaman akun, dan tautan pelacakan pelanggan tidak masuk.
 
 ## Kata kunci
 
@@ -26,7 +26,7 @@ Kata-kata masuk ke dalam teks sebagai kalimat alami, bukan ditumpuk atau diisi b
 
 | Tempat | Bahasa Indonesia | English |
 |---|---|---|
-| Judul (`/`) | Tamirhane: Software bengkel gratis dan pelacakan servis | Tamirhane: Free repair shop software and repair tracking |
+| Judul (`/`) | NusaServis: Software bengkel gratis dan pelacakan servis | NusaServis: Free repair shop software and repair tracking |
 | Deskripsi (`/`) | Perangkat lunak servis gratis untuk bengkel perbaikan: tanda terima penerimaan perangkat, pesanan kerja, persetujuan penawaran, stok suku cadang; pelanggan memantau perangkatnya dari ponsel. | Free repair shop software: check-in receipts, work orders, quote approval and parts stock. Customers follow their device's repair on their phone. |
 | `h1` | Pelacakan pesanan kerja untuk bengkel perbaikan | Work order tracking for repair shops |
 
@@ -46,8 +46,8 @@ Kata-kata masuk ke dalam teks sebagai kalimat alami, bukan ditumpuk atau diisi b
 
 ## Search Console (dilakukan pengguna)
 
-1. https://search.google.com/search-console → Tambah properti → **Domain** `miracdeprem.com` jika sudah terverifikasi, subdomain tamirhane akan muncul di bawahnya; jika tidak, **Prefiks URL** `https://tamirhane.miracdeprem.com/`.
+1. https://search.google.com/search-console → Tambah properti → **Domain** `miracdeprem.com` jika sudah terverifikasi, subdomain NusaServis akan muncul di bawahnya; jika tidak, **Prefiks URL** `https://NusaServis.miracdeprem.com/`.
 2. Jika prefiks URL dipilih, untuk verifikasi sebaiknya gunakan **DNS (catatan TXT)**, bukan tag HTML (ditambahkan ke DNS Vercel).
 3. Pengindeksan → Peta situs → kirim `sitemap.xml`.
-4. Inspeksi URL → untuk `https://tamirhane.miracdeprem.com/` dan `/en/`, pilih "Minta pengindeksan".
+4. Inspeksi URL → untuk `https://NusaServis.miracdeprem.com/` dan `/en/`, pilih "Minta pengindeksan".
 5. Beberapa hari kemudian, di laporan Halaman, periksa bahwa kedua bahasa berstatus "Terindeks" dan tidak ada peringatan hreflang.
